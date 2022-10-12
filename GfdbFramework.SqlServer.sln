@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31313.79
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GfdbFramework.SqlServer", "GfdbFramework.SqlServer\GfdbFramework.SqlServer.csproj", "{3C6CEBE1-1FE1-4639-98F0-AD12110583AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GfdbFramework.SqlServer.Test", "GfdbFramework.SqlServer.Test\GfdbFramework.SqlServer.Test.csproj", "{483F10FC-8DBD-4772-B724-441A1FECCA05}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3C6CEBE1-1FE1-4639-98F0-AD12110583AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C6CEBE1-1FE1-4639-98F0-AD12110583AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C6CEBE1-1FE1-4639-98F0-AD12110583AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C6CEBE1-1FE1-4639-98F0-AD12110583AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{483F10FC-8DBD-4772-B724-441A1FECCA05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{483F10FC-8DBD-4772-B724-441A1FECCA05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{483F10FC-8DBD-4772-B724-441A1FECCA05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{483F10FC-8DBD-4772-B724-441A1FECCA05}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {24249215-D993-4B38-9E6D-2CF75DB44E7E}
+	EndGlobalSection
+EndGlobal
