@@ -231,6 +231,8 @@ namespace GfdbFramework.SqlServer
 
             while (dataReader.Read() && readerHandler(dataReader)) { }
 
+            dataReader.Close();
+
             CloseConnection(ConnectionOpenedMode.Auto);
         }
 
@@ -500,6 +502,18 @@ namespace GfdbFramework.SqlServer
             string connectionString = new Regex(@"(?:((?:initial\s+catalog)|database))\s*=\s*\S+?(;|$)", RegexOptions.IgnoreCase).Replace(_ConnectionString, "$1=master$2");
 
             return new SqlConnection(connectionString);
+        }
+
+        /// <summary>
+        /// 删除指定的数据表。
+        /// </summary>
+        /// <param name="tableName">待删除的数据表名称。</param>
+        /// <returns>删除成功返回 true，否则返回 false。</returns>
+        public bool DeleteTable(string tableName)
+        {
+            ExecuteNonQuery($"drop table @tableName", new Realize.ReadOnlyList<DbParameter>(new SqlParameter("tableName", tableName)));
+
+            return true;
         }
     }
 }

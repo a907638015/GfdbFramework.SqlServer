@@ -14,7 +14,7 @@ namespace GfdbFramework.SqlServer.Test.Entities
         /// <summary>
         /// 获取或设置该商品单位的名称。
         /// </summary>
-        [Field(IsUnique = true)]
+        [Field(IsNullable = false, SimpleIndex = Enum.SortType.Ascending)]
         public string Name { get; set; }
     }
 }

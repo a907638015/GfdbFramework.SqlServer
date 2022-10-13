@@ -20,7 +20,7 @@ namespace GfdbFramework.SqlServer
     /// </summary>
     public class SqlFactory : ISqlFactory
     {
-        private const string _CASE_SENSITIVE_MARK = "collate Latin1_General_CS_AS";
+        private const string _CASE_SENSITIVE_MARK = "collate Chinese_PRC_CI_AI";
         private const string _BOOL_TYPE_NAME = "System.Boolean";
         private static readonly string _DBFunCountMethodName = nameof(DBFun.Count);
         private static readonly string _DBFunMaxMethodName = nameof(DBFun.Max);
@@ -31,6 +31,8 @@ namespace GfdbFramework.SqlServer
         private static readonly string _DBFunSTDevPMethodName = nameof(DBFun.STDevP);
         private static readonly string _DBFunVarMethodName = nameof(DBFun.Var);
         private static readonly string _DBFunVarPMethodName = nameof(DBFun.VarP);
+        private static readonly string _DBFunNowTimeMethodName = nameof(DBFun.NowTime);
+        private static readonly string _DBFunNewIDMethodName = nameof(DBFun.NewID);
         private static readonly Type _DBFunType = typeof(DBFun);
 
         /// <summary>
@@ -838,6 +840,16 @@ namespace GfdbFramework.SqlServer
 
                     return new ExpressionInfo($"{methodName}({basicField.ExpressionInfo.SQL})", OperationType.Call);
                 }
+                //DBFun.NowTime 函数
+                else if ((field.Parameters == null || field.Parameters.Count < 1) && field.MethodInfo.Name == _DBFunNowTimeMethodName)
+                {
+                    return new ExpressionInfo("getDate()", OperationType.Call);
+                }
+                //DBFun.NewID 函数
+                else if ((field.Parameters == null || field.Parameters.Count < 1) && field.MethodInfo.Name == _DBFunNewIDMethodName)
+                {
+                    return new ExpressionInfo("newID()", OperationType.Call);
+                }
             }
 
             throw new Exception($"未能将调用 {field.MethodInfo.DeclaringType.FullName} 类中的 {field.MethodInfo.Name} 方法字段转换成 Sql 表示信息");
@@ -949,23 +961,30 @@ namespace GfdbFramework.SqlServer
         /// <param name="values">需要插入字段对应的值集合。</param>
         /// <param name="parameters">执行生成 Sql 所需使用的参数集合。</param>
         /// <returns>生成好的插入 Sql 语句。</returns>
-        public string GenerateInsertSql(IDataContext dataContext, OriginalDataSource dataSource, Interface.IReadOnlyList<OriginalField> fields, Interface.IReadOnlyList<object> values, out Interface.IReadOnlyList<DbParameter> parameters)
+        public string GenerateInsertSql(IDataContext dataContext, OriginalDataSource dataSource, Interface.IReadOnlyList<OriginalField> fields, Interface.IReadOnlyList<BasicField> values, out Interface.IReadOnlyList<DbParameter> parameters)
         {
             StringBuilder insertFields = new StringBuilder();
             StringBuilder insertValues = new StringBuilder();
-            Dictionary<object, DbParameter> args = new Dictionary<object, DbParameter>();
+            Dictionary<object, DbParameter> pars = new Dictionary<object, DbParameter>();
+
+            string addParameterFun(object item)
+            {
+                if (!pars.TryGetValue(item, out DbParameter dbParameter))
+                {
+                    dbParameter = new SqlParameter($"P{pars.Count}", item);
+
+                    pars.Add(item, dbParameter);
+                }
+
+                return $"@{dbParameter.ParameterName}";
+            };
 
             for (int i = 0; i < fields.Count; i++)
             {
                 OriginalField field = fields[i];
-                object value = values[i];
+                BasicField valueField = values[i];
 
-                if (!args.TryGetValue(value, out DbParameter parameter))
-                {
-                    parameter = new SqlParameter($"P{args.Count}", value);
-
-                    args.Add(value, parameter);
-                }
+                valueField.InitExpressionSQL(dataContext, dataSource, addParameterFun);
 
                 if (i > 0)
                 {
@@ -974,10 +993,14 @@ namespace GfdbFramework.SqlServer
                 }
 
                 insertFields.Append(field.FieldName);
-                insertValues.Append($"@{parameter.ParameterName}");
+
+                if (valueField.Type == FieldType.Subquery)
+                    insertValues.Append($"({values[i].ExpressionInfo.SQL})");
+                else
+                    insertValues.Append($"{values[i].ExpressionInfo.SQL}");
             }
 
-            parameters = new Realize.ReadOnlyList<DbParameter>(args.Values);
+            parameters = new Realize.ReadOnlyList<DbParameter>(pars.Values);
 
             return $"insert into {dataSource.Name}({insertFields}) values ({insertValues})";
         }
@@ -1282,7 +1305,7 @@ namespace GfdbFramework.SqlServer
                         uniqueConstraints.AppendFormat(" unique({0})", field.FieldName);
                     }
 
-                    if (field.IsNullable)
+                    if (!field.IsNullable)
                         fields.Append(" not null");
                 }
 

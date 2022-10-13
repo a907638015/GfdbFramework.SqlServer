@@ -19,12 +19,13 @@ namespace GfdbFramework.SqlServer.Test.Entities
         /// <summary>
         /// 获取或设置该商品品牌的唯一代码。
         /// </summary>
-        [Field(IsUnique = true, SimpleIndex = Enum.SortType.Ascending)]
+        [Field(IsNullable = false, SimpleIndex = Enum.SortType.Ascending)]
         public string Code { get; set; }
 
         /// <summary>
         /// 获取或设置该商品品牌的上级品牌主键值。
         /// </summary>
+        [Field(SimpleIndex = Enum.SortType.Ascending)]
         public int ParentID { get; set; }
     }
 }
