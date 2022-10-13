@@ -22,6 +22,9 @@ namespace GfdbFramework.SqlServer
     {
         private const string _CASE_SENSITIVE_MARK = "collate Chinese_PRC_CI_AI";
         private const string _BOOL_TYPE_NAME = "System.Boolean";
+        private const string _STRING_TYPE_NAME = "System.String";
+        private const string _DATETIME_TYPE_NAME = "System.DateTime";
+        private const string _INT_TYPE_NAME = "System.Int32";
         private static readonly string _DBFunCountMethodName = nameof(DBFun.Count);
         private static readonly string _DBFunMaxMethodName = nameof(DBFun.Max);
         private static readonly string _DBFunMinMethodName = nameof(DBFun.Min);
@@ -33,6 +36,20 @@ namespace GfdbFramework.SqlServer
         private static readonly string _DBFunVarPMethodName = nameof(DBFun.VarP);
         private static readonly string _DBFunNowTimeMethodName = nameof(DBFun.NowTime);
         private static readonly string _DBFunNewIDMethodName = nameof(DBFun.NewID);
+        private static readonly string _DBFunDiffYearMethodName = nameof(DBFun.DiffYear);
+        private static readonly string _DBFunDiffMonthMethodName = nameof(DBFun.DiffMonth);
+        private static readonly string _DBFunDiffDayMethodName = nameof(DBFun.DiffDay);
+        private static readonly string _DBFunDiffHourMethodName = nameof(DBFun.DiffHour);
+        private static readonly string _DBFunDiffMinuteMethodName = nameof(DBFun.DiffMinute);
+        private static readonly string _DBFunDiffSecondMethodName = nameof(DBFun.DiffSecond);
+        private static readonly string _DBFunDiffMillisecondMethodName = nameof(DBFun.DiffMillisecond);
+        private static readonly string _DBFunAddYearMethodName = nameof(DBFun.AddYear);
+        private static readonly string _DBFunAddMonthMethodName = nameof(DBFun.AddMonth);
+        private static readonly string _DBFunAddDayMethodName = nameof(DBFun.AddDay);
+        private static readonly string _DBFunAddHourMethodName = nameof(DBFun.AddHour);
+        private static readonly string _DBFunAddMinuteMethodName = nameof(DBFun.AddMinute);
+        private static readonly string _DBFunAddSecondMethodName = nameof(DBFun.AddSecond);
+        private static readonly string _DBFunAddMillisecondMethodName = nameof(DBFun.AddMillisecond);
         private static readonly Type _DBFunType = typeof(DBFun);
 
         /// <summary>
@@ -516,7 +533,7 @@ namespace GfdbFramework.SqlServer
                         string containType = binaryField.OperationType == OperationType.NotIn ? "not in" : "in";
                         string leftSql = binaryField.Left.Type == FieldType.Subquery || Helper.CheckIsPriority(binaryField.OperationType, binaryField.Left.ExpressionInfo.Type, false) ? $"({binaryField.Left.ExpressionInfo.SQL})" : binaryField.Left.ExpressionInfo.SQL;
 
-                        if (binaryField.Left.DataType.FullName == "System.String" && dataContext.IsCaseSensitive)
+                        if (binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && dataContext.IsCaseSensitive)
                             leftSql = $"{leftSql} {_CASE_SENSITIVE_MARK}";
 
                         if (binaryField.Right.Type == FieldType.Subquery)
@@ -567,12 +584,12 @@ namespace GfdbFramework.SqlServer
                             switch (binaryField.OperationType)
                             {
                                 case OperationType.Equal:
-                                    if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == "System.String" && binaryField.Right.DataType.FullName == "System.String")
+                                    if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && binaryField.Right.DataType.FullName == _STRING_TYPE_NAME)
                                         return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} = {rightSql}", OperationType.Equal);
 
                                     return new ExpressionInfo($"{leftSql} = {rightSql}", OperationType.Equal);
                                 case OperationType.NotEqual:
-                                    if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == "System.String" && binaryField.Right.DataType.FullName == "System.String")
+                                    if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && binaryField.Right.DataType.FullName == _STRING_TYPE_NAME)
                                         return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} != {rightSql}", OperationType.Equal);
 
                                     return new ExpressionInfo($"{leftSql} != {rightSql}", OperationType.NotEqual);
@@ -642,12 +659,12 @@ namespace GfdbFramework.SqlServer
         /// <returns>生成好的表示 Sql 信息。</returns>
         public ExpressionInfo InitMemberField(IDataContext dataContext, DataSource.DataSource dataSource, MemberField field, Func<object, string> addParameter)
         {
-            if (field.ObjectField != null)
+            if (field.ObjectField != null && field.ObjectField is BasicField basicField)
             {
                 //若调用实例为 string 类型
-                if (field.ObjectField.DataType.FullName == "System.String")
+                if (field.ObjectField.DataType.FullName == _STRING_TYPE_NAME)
                 {
-                    if (field.ObjectField is BasicField basicField && field.MemberInfo.Name == "Length" && field.MemberInfo.MemberType == MemberTypes.Property)
+                    if (field.MemberInfo.Name == "Length" && field.MemberInfo.MemberType == MemberTypes.Property)
                     {
                         basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
 
@@ -656,9 +673,35 @@ namespace GfdbFramework.SqlServer
                         return new ExpressionInfo($"len({objectSql})", OperationType.Call);
                     }
                 }
+                //若调用实例为 DateTime 类型且成员类型为属性
+                else if (field.ObjectField.DataType.FullName == _DATETIME_TYPE_NAME && field.MemberInfo.MemberType == MemberTypes.Property)
+                {
+                    if (field.MemberInfo.Name == "Year"
+                        || field.MemberInfo.Name == "Month"
+                        || field.MemberInfo.Name == "Day"
+                        || field.MemberInfo.Name == "Hour"
+                        || field.MemberInfo.Name == "Minute"
+                        || field.MemberInfo.Name == "Second"
+                        || field.MemberInfo.Name == "Millisecond")
+                    {
+                        basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                        string dateTimeSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+
+                        return new ExpressionInfo($"dateName({field.MemberInfo.Name.ToLower()}, {dateTimeSql})", OperationType.Call);
+                    }
+                    else if (field.MemberInfo.Name == "Date")
+                    {
+                        basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                        string dateTimeSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+
+                        return new ExpressionInfo($"convert(date, {dateTimeSql})", OperationType.Call);
+                    }
+                }
             }
 
-            throw new Exception($"未能将调用 {field.MemberInfo.DeclaringType.FullName} 类中的 {field.MemberInfo.Name} 成员字段转换成 Sql 表示信息");
+            throw new Exception($"未能将调用 {field.MemberInfo.DeclaringType.FullName} 类中的 {field.MemberInfo.Name} 成员转换成 Sql 表示信息");
         }
 
         /// <summary>
@@ -686,7 +729,7 @@ namespace GfdbFramework.SqlServer
                         return new ExpressionInfo($"convert(varchar, {objectSql})", OperationType.Call);
                     }
                     //若调用实例为 string 类型
-                    else if (field.ObjectField.DataType.FullName == "System.String")
+                    else if (field.ObjectField.DataType.FullName == _STRING_TYPE_NAME)
                     {
                         //IndexOf 方法
                         if (field.MethodInfo.Name == "IndexOf" && field.Parameters != null && (field.Parameters.Count == 1 || field.Parameters.Count == 2))
@@ -765,6 +808,94 @@ namespace GfdbFramework.SqlServer
                             string insertString = field.Parameters[1].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
 
                             return new ExpressionInfo($"subString({objectSql}, 1, {index}) + {insertString} + subString({objectSql}, index + 1, len({objectSql}) - {index})", OperationType.Add);
+                        }
+                    }
+                    //若调用实例为 DateTime 类型
+                    else if (field.ObjectField.DataType.FullName == _DATETIME_TYPE_NAME)
+                    {
+                        if (field.MethodInfo.Name == "ToString")
+                        {
+                            string format = null;
+
+                            if (field.Parameters != null && field.Parameters.Count > 0)
+                            {
+                                if (field.Parameters.Count == 1)
+                                {
+                                    if (field.Parameters[0].DataType.FullName != _STRING_TYPE_NAME)
+                                        throw new Exception("Sql Server 日期格式化只支持固定的字符串格式参数");
+                                    else if (field.Parameters[0].Type != FieldType.Constant)
+                                        throw new Exception("Sql Server 日期不支持动态格式化，要想格式化日期，格式参数只能是运行时常量字符串");
+
+                                    format = ((ConstantField)field.Parameters[0]).Value?.ToString();
+                                }
+                                else
+                                {
+                                    throw new Exception("Sql Server 不支持多参数的日期格式化函数");
+                                }
+                            }
+
+                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                            string dateTimeSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+
+                            switch (format)
+                            {
+                                case null:
+                                case "yyyy/MM/dd HH:mm:ss":
+                                    return new ExpressionInfo($"replace(convert(varchar(19), {dateTimeSql}, 25), '-', '/')", OperationType.Call);
+                                case "MM/dd/yy":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 1)", OperationType.Call);
+                                case "yy.MM.dd":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 2)", OperationType.Call);
+                                case "dd/MM/yy":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 3)", OperationType.Call);
+                                case "dd.MM.yy":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 4)", OperationType.Call);
+                                case "dd-MM-yy":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 5)", OperationType.Call);
+                                case "dd MM yy":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 6)", OperationType.Call);
+                                case "HH:mm:ss":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 8)", OperationType.Call);
+                                case "MM-dd-yy":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 10)", OperationType.Call);
+                                case "yy/MM/dd":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 11)", OperationType.Call);
+                                case "yyMMdd":
+                                    return new ExpressionInfo($"convert(varchar(6), {dateTimeSql}, 12)", OperationType.Call);
+                                case "dd MM yyyy HH:mm:ss:fff":
+                                    return new ExpressionInfo($"convert(varchar(23), {dateTimeSql}, 13)", OperationType.Call);
+                                case "HH:mm:ss:fff":
+                                    return new ExpressionInfo($"convert(varchar(12), {dateTimeSql}, 14)", OperationType.Call);
+                                case "yyyy-MM-dd HH:mm:ss.fff":
+                                    return new ExpressionInfo($"convert(varchar(23), {dateTimeSql}, 21)", OperationType.Call);
+                                case "yyyy-MM-dd":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 23)", OperationType.Call);
+                                case "yyyy-MM-dd HH:mm:ss":
+                                    return new ExpressionInfo($"convert(varchar(19), {dateTimeSql}, 25)", OperationType.Call);
+                                case "MM/dd/yyyy":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 101)", OperationType.Call);
+                                case "yyyy.MM.dd":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 102)", OperationType.Call);
+                                case "dd/MM/yyyy":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 103)", OperationType.Call);
+                                case "dd.MM.yyyy":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 104)", OperationType.Call);
+                                case "dd-MM-yyyy":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 105)", OperationType.Call);
+                                case "dd MM yyyy":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 106)", OperationType.Call);
+                                case "MM-dd-yyyy":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 110)", OperationType.Call);
+                                case "yyyy/MM/dd":
+                                    return new ExpressionInfo($"convert(varchar(10), {dateTimeSql}, 111)", OperationType.Call);
+                                case "yyyyMMdd":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 112)", OperationType.Call);
+                                case "yyyyMMddHHmmssfff":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 112) + replace(convert(varchar(12), {dateTimeSql}, 14), ':', '')", OperationType.Add);
+                                case "yyyyMMddHHmmss":
+                                    return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 112) + replace(convert(varchar(9), {dateTimeSql}, 14), ':', '')", OperationType.Add);
+                            }
                         }
                     }
                 }
@@ -849,6 +980,82 @@ namespace GfdbFramework.SqlServer
                 else if ((field.Parameters == null || field.Parameters.Count < 1) && field.MethodInfo.Name == _DBFunNewIDMethodName)
                 {
                     return new ExpressionInfo("newID()", OperationType.Call);
+                }
+                //DBFun 的各种日期差值计算函数
+                else if (field.Parameters != null && field.MethodInfo.ReturnType.FullName == _INT_TYPE_NAME && field.Parameters.Count == 2 && field.Parameters[0].DataType.FullName == _DATETIME_TYPE_NAME && field.Parameters[1].DataType.FullName == _DATETIME_TYPE_NAME &&
+                    (field.MethodInfo.Name == _DBFunDiffYearMethodName
+                    || field.MethodInfo.Name == _DBFunDiffMonthMethodName
+                    || field.MethodInfo.Name == _DBFunDiffDayMethodName
+                    || field.MethodInfo.Name == _DBFunDiffHourMethodName
+                    || field.MethodInfo.Name == _DBFunDiffMinuteMethodName
+                    || field.MethodInfo.Name == _DBFunDiffSecondMethodName
+                    || field.MethodInfo.Name == _DBFunDiffMillisecondMethodName))
+                {
+                    BasicField objectField = (BasicField)field.Parameters[0];
+                    BasicField compareField = (BasicField)field.Parameters[1];
+
+                    objectField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    compareField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string objectSql = objectField.Type == FieldType.Subquery ? $"({objectField.ExpressionInfo.SQL})" : objectField.ExpressionInfo.SQL;
+                    string compareSql = objectField.Type == FieldType.Subquery ? $"({compareField.ExpressionInfo.SQL})" : compareField.ExpressionInfo.SQL;
+
+                    string type;
+
+                    if (field.MethodInfo.Name == _DBFunDiffYearMethodName)
+                        type = "year";
+                    else if (field.MethodInfo.Name == _DBFunDiffMonthMethodName)
+                        type = "month";
+                    else if (field.MethodInfo.Name == _DBFunDiffDayMethodName)
+                        type = "day";
+                    else if (field.MethodInfo.Name == _DBFunDiffHourMethodName)
+                        type = "hour";
+                    else if (field.MethodInfo.Name == _DBFunDiffMinuteMethodName)
+                        type = "minute";
+                    else if (field.MethodInfo.Name == _DBFunDiffSecondMethodName)
+                        type = "second";
+                    else
+                        type = "millisecond";
+
+                    return new ExpressionInfo($"dateDiff({type}, {objectSql}, {compareSql})", OperationType.Call);
+                }
+                //DNFun 的各种日期添加函数
+                else if (field.Parameters != null && field.MethodInfo.ReturnType.FullName == _DATETIME_TYPE_NAME && field.Parameters.Count == 2 && field.Parameters[0].DataType.FullName == _DATETIME_TYPE_NAME && field.Parameters[1].DataType.FullName == _INT_TYPE_NAME &&
+                    (field.MethodInfo.Name == _DBFunAddYearMethodName
+                    || field.MethodInfo.Name == _DBFunAddMonthMethodName
+                    || field.MethodInfo.Name == _DBFunAddDayMethodName
+                    || field.MethodInfo.Name == _DBFunAddHourMethodName
+                    || field.MethodInfo.Name == _DBFunAddMinuteMethodName
+                    || field.MethodInfo.Name == _DBFunAddSecondMethodName
+                    || field.MethodInfo.Name == _DBFunAddMillisecondMethodName))
+                {
+                    BasicField objectField = (BasicField)field.Parameters[0];
+                    BasicField valueField = (BasicField)field.Parameters[1];
+
+                    objectField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    valueField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string objectSql = objectField.Type == FieldType.Subquery ? $"({objectField.ExpressionInfo.SQL})" : objectField.ExpressionInfo.SQL;
+                    string valueSql = objectField.Type == FieldType.Subquery ? $"({valueField.ExpressionInfo.SQL})" : valueField.ExpressionInfo.SQL;
+
+                    string type;
+
+                    if (field.MethodInfo.Name == _DBFunAddYearMethodName)
+                        type = "year";
+                    else if (field.MethodInfo.Name == _DBFunAddMonthMethodName)
+                        type = "month";
+                    else if (field.MethodInfo.Name == _DBFunAddDayMethodName)
+                        type = "day";
+                    else if (field.MethodInfo.Name == _DBFunAddHourMethodName)
+                        type = "hour";
+                    else if (field.MethodInfo.Name == _DBFunAddMinuteMethodName)
+                        type = "minute";
+                    else if (field.MethodInfo.Name == _DBFunAddSecondMethodName)
+                        type = "second";
+                    else
+                        type = "millisecond";
+
+                    return new ExpressionInfo($"dateAdd({type}, {valueSql}, {objectSql})", OperationType.Call);
                 }
             }
 
@@ -1276,7 +1483,7 @@ namespace GfdbFramework.SqlServer
                     {
                         string valueType = field.DataType.FullName;
 
-                        if (valueType == "System.Int32"
+                        if (valueType == _INT_TYPE_NAME
                             || valueType == "System.UInt32"
                             || valueType == "System.Int64"
                             || valueType == "System.UInt64"
@@ -1284,9 +1491,9 @@ namespace GfdbFramework.SqlServer
                             || valueType == "System.UInt16"
                             || valueType == "System.Byte"
                             || valueType == "System.SByte"
-                            || valueType == "System.Boolean"
+                            || valueType == _BOOL_TYPE_NAME
                             || field.DataType.IsEnum
-                            || (new Regex(@"^\s*getdate\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == "System.DateTime")
+                            || (new Regex(@"^\s*getdate\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == _DATETIME_TYPE_NAME)
                             || (new Regex(@"^\s*newid\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == "System.Guid"))
                         {
                             fields.AppendFormat(" default {0}", field.DefaultValue);

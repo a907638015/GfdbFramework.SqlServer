@@ -139,7 +139,7 @@ namespace GfdbFramework.SqlServer
         /// <returns>执行 <paramref name="sql"/> 参数对应 Sql 语句所影响的数据行数。</returns>
         public int ExecuteNonQuery(string sql, Interface.IReadOnlyList<DbParameter> parameters)
         {
-            return ExecuteNonQuery(sql, CommandType.Text, null);
+            return ExecuteNonQuery(sql, CommandType.Text, parameters);
         }
 
         /// <summary>
