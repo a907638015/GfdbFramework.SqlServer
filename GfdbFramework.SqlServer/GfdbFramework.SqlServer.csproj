@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="GfdbFramework" Version="1.2.0" />
+		<PackageReference Include="GfdbFramework" Version="1.2.1" />
 	</ItemGroup>
 	
 	<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
