@@ -511,7 +511,7 @@ namespace GfdbFramework.SqlServer
         /// <returns>删除成功返回 true，否则返回 false。</returns>
         public bool DeleteTable(string tableName)
         {
-            ExecuteNonQuery($"drop table @tableName", new Realize.ReadOnlyList<DbParameter>(new SqlParameter("tableName", tableName)));
+            ExecuteNonQuery($"drop table {tableName}");
 
             return true;
         }
