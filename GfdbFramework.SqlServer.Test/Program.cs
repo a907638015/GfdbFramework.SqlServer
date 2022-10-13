@@ -223,6 +223,30 @@ namespace GfdbFramework.SqlServer.Test
             int deleteCount = dataContext.Commodities.InnerJoin(dataContext.Users, (left, right) => left.CreateUID == right.ID).Delete(source => source.Right.Name == "李四");
 
             Console.WriteLine($"成功删除李四户创建的商品数量：{deleteCount}");
+
+            Console.WriteLine($"{Environment.NewLine}-----  查询商品名称、最大包装单位、中包包装单位、最小单位、分类名称、品牌名称（多表关联） ----{Environment.NewLine}");
+
+            //多表关联（查询商品名称、最大包装单位、中包包装单位、最小单位、分类名称、品牌名称）
+            var data2 = dataContext.Commodities
+                .InnerJoin(dataContext.Classifies, (left, right) => left.ClassifyID == right.ID)
+                .InnerJoin(dataContext.Units, (left, right) => left.Left.PackageUnitID == right.ID)
+                .InnerJoin(dataContext.Units, (left, right) => left.Left.Left.MiddleUnitID == right.ID)
+                .InnerJoin(dataContext.Units, (left, right) => left.Left.Left.Left.MinimumUnitID == right.ID)
+                .LeftJoin(dataContext.Brands, (left, right) => left.Left.Left.Left.Left.BrandID == right.ID)
+                .Select(source => new
+                {
+                    Name = source.Left.Left.Left.Left.Left.Name,
+                    Classify = source.Left.Left.Left.Left.Right.Name,
+                    PackageUnit = source.Left.Left.Left.Right.Name,
+                    MiddleUnit = source.Left.Left.Right.Name,
+                    MinimumUnit = source.Left.Right.Name,
+                    Brand = source.Right.Name
+                });
+
+            foreach (var item in data2)
+            {
+                Console.WriteLine($"商品名称：{item.Name}，分类：{item.Classify}，最大包装单位：{item.PackageUnit}，中包包装单位：{item.MiddleUnit}，零售包装单位：{ item.MinimumUnit}，品牌：{ item.Brand}");
+            }
         }
 
         static string GetRandomString(int len)
