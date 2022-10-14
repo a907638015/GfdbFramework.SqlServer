@@ -749,7 +749,7 @@ namespace GfdbFramework.SqlServer
                             else
                                 return new ExpressionInfo($"charIndex({searchString}, {objectSql}, {startIndex} + 1) - 1", OperationType.Subtract);
                         }
-                        ///Substring 方法
+                        //Substring 方法
                         else if (field.MethodInfo.Name == "Substring" && field.Parameters != null && (field.Parameters.Count == 1 || field.Parameters.Count == 2))
                         {
                             BasicField startField = (BasicField)field.Parameters[0];
