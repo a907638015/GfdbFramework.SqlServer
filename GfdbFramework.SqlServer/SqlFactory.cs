@@ -25,6 +25,13 @@ namespace GfdbFramework.SqlServer
         private const string _STRING_TYPE_NAME = "System.String";
         private const string _DATETIME_TYPE_NAME = "System.DateTime";
         private const string _INT_TYPE_NAME = "System.Int32";
+        private const string _DOUBLE_TYPE_NAME = "System.Double";
+        private const string _FLOAT_TYPE_NAME = "System.Single";
+        private const string _SHORT_TYPE_NAME = "System.Int16";
+        private const string _BYTE_TYPE_NAME = "System.Byte";
+        private const string _LONG_TYPE_NAME = "System.Int64";
+        private const string _DECIMAL_TYPE_NAME = "System.Decimal";
+        private const string _GUID_TYPE_NAME = "System.Guid";
         private static readonly string _DBFunCountMethodName = nameof(DBFun.Count);
         private static readonly string _DBFunMaxMethodName = nameof(DBFun.Max);
         private static readonly string _DBFunMinMethodName = nameof(DBFun.Min);
@@ -719,17 +726,8 @@ namespace GfdbFramework.SqlServer
                 //调用实例字段是基础数据字段
                 if (field.ObjectField is BasicField basicField)
                 {
-                    //ToString 方法
-                    if (field.MethodInfo.Name == "ToString")
-                    {
-                        basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                        string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-
-                        return new ExpressionInfo($"convert(varchar, {objectSql})", OperationType.Call);
-                    }
                     //若调用实例为 string 类型
-                    else if (field.ObjectField.DataType.FullName == _STRING_TYPE_NAME)
+                    if (field.ObjectField.DataType.FullName == _STRING_TYPE_NAME)
                     {
                         //IndexOf 方法
                         if (field.MethodInfo.Name == "IndexOf" && field.Parameters != null && (field.Parameters.Count == 1 || field.Parameters.Count == 2))
@@ -813,6 +811,7 @@ namespace GfdbFramework.SqlServer
                     //若调用实例为 DateTime 类型
                     else if (field.ObjectField.DataType.FullName == _DATETIME_TYPE_NAME)
                     {
+                        //ToString 方法
                         if (field.MethodInfo.Name == "ToString")
                         {
                             string format = null;
@@ -897,6 +896,15 @@ namespace GfdbFramework.SqlServer
                                     return new ExpressionInfo($"convert(varchar(8), {dateTimeSql}, 112) + replace(convert(varchar(9), {dateTimeSql}, 14), ':', '')", OperationType.Add);
                             }
                         }
+                    }
+                    //ToString 方法
+                    else if (field.MethodInfo.Name == "ToString")
+                    {
+                        basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                        string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+
+                        return new ExpressionInfo($"convert(varchar, {objectSql})", OperationType.Call);
                     }
                 }
             }
@@ -1056,6 +1064,82 @@ namespace GfdbFramework.SqlServer
                         type = "millisecond";
 
                     return new ExpressionInfo($"dateAdd({type}, {valueSql}, {objectSql})", OperationType.Call);
+                }
+            }
+            //各种 Parse 方法
+            else if (field.MethodInfo.Name == "Parse" && field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && field.Parameters[0] is BasicField parameterField)
+            {
+                //DateTime.Parse 方法
+                if (field.DataType.FullName == _DATETIME_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _DATETIME_TYPE_NAME)
+                {
+                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"convert(dateTime,{parameterSql})", OperationType.Call);
+                }
+                //int.Parse 方法
+                else if (field.DataType.FullName == _INT_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _INT_TYPE_NAME)
+                {
+                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"convert(int,{parameterSql})", OperationType.Call);
+                }
+                //double.Parse 方法
+                else if (field.DataType.FullName == _DOUBLE_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _DOUBLE_TYPE_NAME)
+                {
+                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"convert(float,{parameterSql})", OperationType.Call);
+                }
+                //long.Parse 方法
+                else if (field.DataType.FullName == _LONG_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _LONG_TYPE_NAME)
+                {
+                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"convert(bigint,{parameterSql})", OperationType.Call);
+                }
+                //short.Parse 方法
+                else if (field.DataType.FullName == _SHORT_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _SHORT_TYPE_NAME)
+                {
+                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"convert(smallint,{parameterSql})", OperationType.Call);
+                }
+                //byte.Parse 方法
+                else if (field.DataType.FullName == _BYTE_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _BYTE_TYPE_NAME)
+                {
+                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"convert(tinyint,{parameterSql})", OperationType.Call);
+                }
+                //decimal.Parse 方法
+                else if (field.DataType.FullName == _DECIMAL_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _DECIMAL_TYPE_NAME)
+                {
+                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"convert(tinyint,{parameterSql})", OperationType.Call);
+                }
+                //Guid.Parse 方法
+                else if (field.DataType.FullName == _GUID_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _GUID_TYPE_NAME)
+                {
+                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"convert(uniqueidentifier,{parameterSql})", OperationType.Call);
                 }
             }
 
@@ -1485,13 +1569,16 @@ namespace GfdbFramework.SqlServer
 
                         if (valueType == _INT_TYPE_NAME
                             || valueType == "System.UInt32"
-                            || valueType == "System.Int64"
                             || valueType == "System.UInt64"
-                            || valueType == "System.Int16"
                             || valueType == "System.UInt16"
-                            || valueType == "System.Byte"
                             || valueType == "System.SByte"
+                            || valueType == _LONG_TYPE_NAME
+                            || valueType == _BYTE_TYPE_NAME
+                            || valueType == _SHORT_TYPE_NAME
+                            || valueType == _FLOAT_TYPE_NAME
+                            || valueType == _DOUBLE_TYPE_NAME
                             || valueType == _BOOL_TYPE_NAME
+                            || valueType == _DECIMAL_TYPE_NAME
                             || field.DataType.IsEnum
                             || (new Regex(@"^\s*getdate\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == _DATETIME_TYPE_NAME)
                             || (new Regex(@"^\s*newid\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == "System.Guid"))
