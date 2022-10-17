@@ -14,7 +14,7 @@
 		<RepositoryType>应用程序扩展</RepositoryType>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageIcon>logo.png</PackageIcon>
-		<DocumentationFile>E:\Visual Studio\GfdbFramework.SqlServer\GfdbFramework.SqlServer\bin\GfdbFramework.SqlServer.xml</DocumentationFile>
+		<DocumentationFile>bin\GfdbFramework.SqlServer.xml</DocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -27,10 +27,6 @@
 			<PackagePath></PackagePath>
 		</None>
 	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="GfdbFramework" Version="1.2.3" />
-	</ItemGroup>
 	
 	<ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
 		<PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
@@ -42,6 +38,10 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
 		<PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="GfdbFramework" Version="1.2.3" />
 	</ItemGroup>
 
 </Project>
