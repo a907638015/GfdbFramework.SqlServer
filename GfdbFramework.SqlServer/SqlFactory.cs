@@ -414,7 +414,7 @@ namespace GfdbFramework.SqlServer
                     //大于等于Sql Server 2012时使用 iif 函数
                     if (dataContext.BuildNumber >= 684)
                     {
-                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0)";
+                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))";
 
                         useType = OperationType.Call;
                     }
@@ -1207,7 +1207,7 @@ namespace GfdbFramework.SqlServer
                     //大于等于Sql Server 2012时使用 iif 函数
                     if (dataContext.BuildNumber >= 684)
                     {
-                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0)";
+                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))";
 
                         useType = OperationType.Call;
                     }
