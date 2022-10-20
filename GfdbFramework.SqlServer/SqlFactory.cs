@@ -812,7 +812,7 @@ namespace GfdbFramework.SqlServer
                             string index = field.Parameters[0].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
                             string insertString = field.Parameters[1].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
 
-                            return new ExpressionInfo($"subString({objectSql}, 1, {index}) + {insertString} + subString({objectSql}, index + 1, len({objectSql}) - {index})", OperationType.Add);
+                            return new ExpressionInfo($"subString({objectSql}, 1, {index}) + {insertString} + subString({objectSql}, {(field.Parameters[0].Type != FieldType.Subquery && Helper.CheckIsPriority(OperationType.Add, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, false) ? $"({index})" : index)} + 1, len({objectSql}) - {(field.Parameters[0].Type != FieldType.Subquery && Helper.CheckIsPriority(OperationType.Subtract, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, true) ? $"({index})" : index)})", OperationType.Add);
                         }
                     }
                     //若调用实例为 DateTime 类型
