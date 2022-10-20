@@ -1161,7 +1161,7 @@ namespace GfdbFramework.SqlServer
 
                     string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
 
-                    return new ExpressionInfo($"convert(tinyint,{parameterSql})", OperationType.Call);
+                    return new ExpressionInfo($"convert(decimal,{parameterSql})", OperationType.Call);
                 }
                 //Guid.Parse 方法
                 else if (field.DataType.FullName == _GUID_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _GUID_TYPE_NAME)
