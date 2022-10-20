@@ -42,7 +42,8 @@ namespace GfdbFramework.SqlServer
         private static readonly string _DBFunVarMethodName = nameof(DBFun.Var);
         private static readonly string _DBFunVarPMethodName = nameof(DBFun.VarP);
         private static readonly string _DBFunNowTimeMethodName = nameof(DBFun.NowTime);
-        private static readonly string _DBFunNewIDMethodName = nameof(DBFun.NewID);
+        private static readonly string _DBFunNewGuidMethodName = nameof(DBFun.NewGuid);
+        private static readonly string _DBFunNewIntMethodName = nameof(DBFun.NewInt);
         private static readonly string _DBFunDiffYearMethodName = nameof(DBFun.DiffYear);
         private static readonly string _DBFunDiffMonthMethodName = nameof(DBFun.DiffMonth);
         private static readonly string _DBFunDiffDayMethodName = nameof(DBFun.DiffDay);
@@ -996,10 +997,28 @@ namespace GfdbFramework.SqlServer
                 {
                     return new ExpressionInfo("getDate()", OperationType.Call);
                 }
-                //DBFun.NewID 函数
-                else if ((field.Parameters == null || field.Parameters.Count < 1) && field.MethodInfo.Name == _DBFunNewIDMethodName)
+                //DBFun.NewGuid 函数
+                else if ((field.Parameters == null || field.Parameters.Count < 1) && field.MethodInfo.Name == _DBFunNewGuidMethodName)
                 {
                     return new ExpressionInfo("newID()", OperationType.Call);
+                }
+                //DBFun.NewInt 函数
+                else if ((field.Parameters == null || field.Parameters.Count < 1 || field.Parameters.Count == 2) && field.MethodInfo.Name == _DBFunNewIntMethodName)
+                {
+                    if (field.Parameters == null || field.Parameters.Count < 1)
+                    {
+                        return new ExpressionInfo("convert(int, (rand() * 4294967295) - 2147483648)", OperationType.Call);
+                    }
+                    else
+                    {
+                        ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                        ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                        string minSql = field.Parameters[0].Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Add, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, false) ? $"{((BasicField)field.Parameters[0]).ExpressionInfo.SQL}" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
+                        string maxSql = field.Parameters[1].Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Multiply, ((BasicField)field.Parameters[1]).ExpressionInfo.Type, true) ? $"{((BasicField)field.Parameters[1]).ExpressionInfo.SQL}" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+
+                        return new ExpressionInfo($"{minSql} + convert(int, rand() * {maxSql})", OperationType.Add);
+                    }
                 }
                 //DBFun 的各种日期差值计算函数
                 else if (field.Parameters != null && field.MethodInfo.ReturnType.FullName == _INT_TYPE_NAME && field.Parameters.Count == 2 && field.Parameters[0].DataType.FullName == _DATETIME_TYPE_NAME && field.Parameters[1].DataType.FullName == _DATETIME_TYPE_NAME &&
