@@ -1594,34 +1594,6 @@ namespace GfdbFramework.SqlServer
                 }
                 else
                 {
-                    if (field.DefaultValue != null)
-                    {
-                        string valueType = field.DataType.FullName;
-
-                        if (valueType == _INT_TYPE_NAME
-                            || valueType == "System.UInt32"
-                            || valueType == "System.UInt64"
-                            || valueType == "System.UInt16"
-                            || valueType == "System.SByte"
-                            || valueType == _LONG_TYPE_NAME
-                            || valueType == _BYTE_TYPE_NAME
-                            || valueType == _SHORT_TYPE_NAME
-                            || valueType == _FLOAT_TYPE_NAME
-                            || valueType == _DOUBLE_TYPE_NAME
-                            || valueType == _BOOL_TYPE_NAME
-                            || valueType == _DECIMAL_TYPE_NAME
-                            || field.DataType.IsEnum
-                            || (new Regex(@"^\s*getdate\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == _DATETIME_TYPE_NAME)
-                            || (new Regex(@"^\s*newid\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == "System.Guid"))
-                        {
-                            fields.AppendFormat(" default {0}", field.DefaultValue);
-                        }
-                        else
-                        {
-                            fields.AppendFormat(" default '{0}'", field.DefaultValue);
-                        }
-                    }
-
                     if (field.IsUnique)
                     {
                         if (uniqueConstraints.Length > 0)
@@ -1632,6 +1604,34 @@ namespace GfdbFramework.SqlServer
 
                     if (!field.IsNullable)
                         fields.Append(" not null");
+                }
+
+                if (field.DefaultValue != null)
+                {
+                    string valueType = field.DataType.FullName;
+
+                    if (valueType == _INT_TYPE_NAME
+                        || valueType == "System.UInt32"
+                        || valueType == "System.UInt64"
+                        || valueType == "System.UInt16"
+                        || valueType == "System.SByte"
+                        || valueType == _LONG_TYPE_NAME
+                        || valueType == _BYTE_TYPE_NAME
+                        || valueType == _SHORT_TYPE_NAME
+                        || valueType == _FLOAT_TYPE_NAME
+                        || valueType == _DOUBLE_TYPE_NAME
+                        || valueType == _BOOL_TYPE_NAME
+                        || valueType == _DECIMAL_TYPE_NAME
+                        || field.DataType.IsEnum
+                        || (new Regex(@"^\s*getdate\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == _DATETIME_TYPE_NAME)
+                        || (new Regex(@"^\s*newid\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == "System.Guid"))
+                    {
+                        fields.AppendFormat(" default {0}", field.DefaultValue);
+                    }
+                    else
+                    {
+                        fields.AppendFormat(" default '{0}'", field.DefaultValue);
+                    }
                 }
 
                 if (field.IsAutoincrement)
