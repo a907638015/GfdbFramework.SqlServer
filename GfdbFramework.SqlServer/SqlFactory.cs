@@ -739,9 +739,9 @@ namespace GfdbFramework.SqlServer
                             if (field.Parameters.Count == 2)
                                 ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
 
-                            string objectSql = basicField.Type == FieldType.Subquery || Helper.CheckIsPriority(basicField.ExpressionInfo.Type, OperationType.Subtract, true) ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                            string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
                             string searchString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
-                            string startIndex = field.Parameters.Count == 1 ? null : field.Parameters[1].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+                            string startIndex = field.Parameters.Count == 1 ? null : field.Parameters[1].Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Add, ((BasicField)field.Parameters[1]).ExpressionInfo.Type, false) ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
 
                             if (dataContext.IsCaseSensitive)
                                 objectSql = $"{objectSql} {_CASE_SENSITIVE_MARK}";
