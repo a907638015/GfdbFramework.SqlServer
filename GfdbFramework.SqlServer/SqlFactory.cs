@@ -1656,7 +1656,12 @@ namespace GfdbFramework.SqlServer
                     if (indices.Length > 0)
                         indices.Append(Environment.NewLine);
 
-                    indices.Append($"create index {item.Name} on [dbo].{dataSource.Name}(");
+                    if (item.Type == IndexType.Unique)
+                        indices.Append("create unique index ");
+                    else
+                        indices.Append("create index ");
+
+                    indices.Append($"{item.Name} on [dbo].{dataSource.Name}(");
 
                     for (int i = 0; i < item.Fields.Count; i++)
                     {
