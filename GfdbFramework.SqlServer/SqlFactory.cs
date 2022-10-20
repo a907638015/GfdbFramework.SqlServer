@@ -479,7 +479,7 @@ namespace GfdbFramework.SqlServer
 
             //大于等于Sql Server 2012时使用 iif 函数
             if (dataContext.BuildNumber >= 684)
-                return new ExpressionInfo($"iif({testSql}, ${ifTrueSql}, ${ifFalseSql})", OperationType.Call);
+                return new ExpressionInfo($"iif({testSql}, {ifTrueSql}, {ifFalseSql})", OperationType.Call);
             else
                 return new ExpressionInfo($"case when {testSql} then ${ifTrueSql} else ${ifFalseSql} end", OperationType.Default);
         }
