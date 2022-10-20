@@ -414,7 +414,7 @@ namespace GfdbFramework.SqlServer
                     //大于等于Sql Server 2012时使用 iif 函数
                     if (dataContext.BuildNumber >= 684)
                     {
-                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0)";
+                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))";
 
                         useType = OperationType.Call;
                     }
@@ -634,12 +634,13 @@ namespace GfdbFramework.SqlServer
                 MethodField methodField = (MethodField)field;
 
                 //string 类型的 StartsWith 或 Contains 方法，不支持多参数的 StartsWith 或 Contains 方法
-                if (methodField.ObjectField != null && methodField.ObjectField is BasicField basicField && (methodField.MethodInfo.Name == "StartsWith" || methodField.MethodInfo.Name == "Contains") && methodField.Parameters != null && methodField.Parameters.Count == 1)
+                if (methodField.ObjectField != null && methodField.ObjectField is BasicField basicField && (methodField.MethodInfo.Name == "StartsWith" || methodField.MethodInfo.Name == "Contains") && methodField.Parameters != null && methodField.Parameters.Count == 1 && methodField.Parameters[0] is BasicField parameter)
                 {
                     basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
 
                     string objectSql = basicField.Type == FieldType.Subquery || Helper.CheckIsPriority(basicField.ExpressionInfo.Type, OperationType.Subtract, true) ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-                    string searchString = methodField.Parameters[0].Type == FieldType.Subquery ? $"({((BasicField)methodField.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)methodField.Parameters[0]).ExpressionInfo.SQL;
+                    string searchString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
                     string checkString = methodField.MethodInfo.Name == "StartsWith" ? "=" : ">=";
 
                     if (dataContext.IsCaseSensitive)
@@ -730,12 +731,16 @@ namespace GfdbFramework.SqlServer
                     if (field.ObjectField.DataType.FullName == _STRING_TYPE_NAME)
                     {
                         //IndexOf 方法
-                        if (field.MethodInfo.Name == "IndexOf" && field.Parameters != null && (field.Parameters.Count == 1 || field.Parameters.Count == 2))
+                        if (field.MethodInfo.Name == "IndexOf" && field.Parameters != null && (field.Parameters.Count == 1 || field.Parameters.Count == 2) && field.Parameters[0] is BasicField parameter)
                         {
                             basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                            parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                            if (field.Parameters.Count == 2)
+                                ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
 
                             string objectSql = basicField.Type == FieldType.Subquery || Helper.CheckIsPriority(basicField.ExpressionInfo.Type, OperationType.Subtract, true) ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-                            string searchString = field.Parameters[0].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
+                            string searchString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
                             string startIndex = field.Parameters.Count == 1 ? null : field.Parameters[1].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
 
                             if (dataContext.IsCaseSensitive)
@@ -797,9 +802,11 @@ namespace GfdbFramework.SqlServer
                                 return new ExpressionInfo($"case when {field.BooleanInfo.SQL} then convert(bit, 1) else convert(bit, 0) end", OperationType.Default);
                         }
                         //Insert 方法
-                        else if (field.MethodInfo.Name == "Insert" && field.Parameters != null && field.Parameters.Count == 2)
+                        else if (field.MethodInfo.Name == "Insert" && field.Parameters != null && field.Parameters.Count == 2 && field.Parameters[0] is BasicField && field.Parameters[1] is BasicField)
                         {
                             basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                            ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                            ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
 
                             string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
                             string index = field.Parameters[0].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
@@ -898,7 +905,7 @@ namespace GfdbFramework.SqlServer
                         }
                     }
                     //ToString 方法
-                    else if (field.MethodInfo.Name == "ToString")
+                    else if (field.MethodInfo.Name == "ToString" && (field.Parameters == null || field.Parameters.Count < 1))
                     {
                         basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
 
@@ -914,6 +921,8 @@ namespace GfdbFramework.SqlServer
                 //各种类型转换函数，如：ToInt32、ToDateTime 等
                 if (field.MethodInfo.Name.StartsWith("To") && field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0] is BasicField basicField)
                 {
+                    basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
                     string parameterSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
 
                     switch (field.MethodInfo.Name)
@@ -1207,7 +1216,7 @@ namespace GfdbFramework.SqlServer
                     //大于等于Sql Server 2012时使用 iif 函数
                     if (dataContext.BuildNumber >= 684)
                     {
-                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0)";
+                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))";
 
                         useType = OperationType.Call;
                     }
