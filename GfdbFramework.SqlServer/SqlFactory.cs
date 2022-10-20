@@ -1037,7 +1037,7 @@ namespace GfdbFramework.SqlServer
                     compareField.InitExpressionSQL(dataContext, dataSource, addParameter);
 
                     string objectSql = objectField.Type == FieldType.Subquery ? $"({objectField.ExpressionInfo.SQL})" : objectField.ExpressionInfo.SQL;
-                    string compareSql = objectField.Type == FieldType.Subquery ? $"({compareField.ExpressionInfo.SQL})" : compareField.ExpressionInfo.SQL;
+                    string compareSql = compareField.Type == FieldType.Subquery ? $"({compareField.ExpressionInfo.SQL})" : compareField.ExpressionInfo.SQL;
 
                     string type;
 
@@ -1075,7 +1075,7 @@ namespace GfdbFramework.SqlServer
                     valueField.InitExpressionSQL(dataContext, dataSource, addParameter);
 
                     string objectSql = objectField.Type == FieldType.Subquery ? $"({objectField.ExpressionInfo.SQL})" : objectField.ExpressionInfo.SQL;
-                    string valueSql = objectField.Type == FieldType.Subquery ? $"({valueField.ExpressionInfo.SQL})" : valueField.ExpressionInfo.SQL;
+                    string valueSql = valueField.Type == FieldType.Subquery ? $"({valueField.ExpressionInfo.SQL})" : valueField.ExpressionInfo.SQL;
 
                     string type;
 
