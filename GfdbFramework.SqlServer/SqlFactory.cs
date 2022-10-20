@@ -801,18 +801,21 @@ namespace GfdbFramework.SqlServer
                             else
                                 return new ExpressionInfo($"case when {field.BooleanInfo.SQL} then convert(bit, 1) else convert(bit, 0) end", OperationType.Default);
                         }
-                        //Insert 方法
-                        else if (field.MethodInfo.Name == "Insert" && field.Parameters != null && field.Parameters.Count == 2 && field.Parameters[0] is BasicField && field.Parameters[1] is BasicField)
+                        //Insert 或 Replace 方法
+                        else if ((field.MethodInfo.Name == "Insert" || field.MethodInfo.Name == "Replace") && field.Parameters != null && field.Parameters.Count == 2 && field.Parameters[0] is BasicField && field.Parameters[1] is BasicField)
                         {
                             basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
                             ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
                             ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
 
                             string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-                            string index = field.Parameters[0].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
-                            string insertString = field.Parameters[1].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+                            string parameter1 = field.Parameters[0].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
+                            string parameter2 = field.Parameters[1].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
 
-                            return new ExpressionInfo($"subString({objectSql}, 1, {index}) + {insertString} + subString({objectSql}, {(field.Parameters[0].Type != FieldType.Subquery && Helper.CheckIsPriority(OperationType.Add, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, false) ? $"({index})" : index)} + 1, len({objectSql}) - {(field.Parameters[0].Type != FieldType.Subquery && Helper.CheckIsPriority(OperationType.Subtract, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, true) ? $"({index})" : index)})", OperationType.Add);
+                            if (field.MethodInfo.Name == "Replace")
+                                return new ExpressionInfo($"replace({objectSql}, {parameter1}, {parameter2})", OperationType.Call);
+                            else
+                                return new ExpressionInfo($"subString({objectSql}, 1, {parameter1}) + {parameter2} + subString({objectSql}, {(field.Parameters[0].Type != FieldType.Subquery && Helper.CheckIsPriority(OperationType.Add, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, false) ? $"({parameter1})" : parameter1)} + 1, len({objectSql}) - {(field.Parameters[0].Type != FieldType.Subquery && Helper.CheckIsPriority(OperationType.Subtract, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, true) ? $"({parameter1})" : parameter1)})", OperationType.Add);
                         }
                     }
                     //若调用实例为 DateTime 类型
