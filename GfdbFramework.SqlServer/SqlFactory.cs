@@ -44,6 +44,7 @@ namespace GfdbFramework.SqlServer
         private static readonly string _DBFunNowTimeMethodName = nameof(DBFun.NowTime);
         private static readonly string _DBFunNewGuidMethodName = nameof(DBFun.NewGuid);
         private static readonly string _DBFunNewIntMethodName = nameof(DBFun.NewInt);
+        private static readonly string _DBFunNewLongMethodName = nameof(DBFun.NewLong);
         private static readonly string _DBFunDiffYearMethodName = nameof(DBFun.DiffYear);
         private static readonly string _DBFunDiffMonthMethodName = nameof(DBFun.DiffMonth);
         private static readonly string _DBFunDiffDayMethodName = nameof(DBFun.DiffDay);
@@ -1019,6 +1020,11 @@ namespace GfdbFramework.SqlServer
 
                         return new ExpressionInfo($"{minSql} + convert(int, rand() * {maxSql})", OperationType.Add);
                     }
+                }
+                //DBFun.NewLong 函数
+                else if ((field.Parameters == null || field.Parameters.Count < 1) && field.MethodInfo.Name == _DBFunNewLongMethodName)
+                {
+                    return new ExpressionInfo("convert(bigint, (rand() * -9223372036854775808) + (rand() * 9223372036854775807))", OperationType.Call);
                 }
                 //DBFun 的各种日期差值计算函数
                 else if (field.Parameters != null && field.MethodInfo.ReturnType.FullName == _INT_TYPE_NAME && field.Parameters.Count == 2 && field.Parameters[0].DataType.FullName == _DATETIME_TYPE_NAME && field.Parameters[1].DataType.FullName == _DATETIME_TYPE_NAME &&
