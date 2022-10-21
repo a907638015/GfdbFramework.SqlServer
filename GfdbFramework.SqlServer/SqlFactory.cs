@@ -32,6 +32,7 @@ namespace GfdbFramework.SqlServer
         private const string _LONG_TYPE_NAME = "System.Int64";
         private const string _DECIMAL_TYPE_NAME = "System.Decimal";
         private const string _GUID_TYPE_NAME = "System.Guid";
+        private const string _MATH_TYPE_NAME = "System.Math";
         private static readonly string _DBFunCountMethodName = nameof(DBFun.Count);
         private static readonly string _DBFunMaxMethodName = nameof(DBFun.Max);
         private static readonly string _DBFunMinMethodName = nameof(DBFun.Min);
@@ -943,6 +944,50 @@ namespace GfdbFramework.SqlServer
                         case "ToDateTime":
                             return new ExpressionInfo($"convert({dataContext.NetTypeToDBType(field.DataType)}, {parameterSql})", OperationType.Call);
                     }
+                }
+            }
+            //如果是 Math 数学函数类
+            else if (field.MethodInfo.ReflectedType.FullName == _MATH_TYPE_NAME)
+            {
+                //Math.Round 函数
+                if (field.MethodInfo.Name == "Round" && field.Parameters != null && (field.Parameters.Count == 1 || (field.Parameters.Count == 2 && field.Parameters[1].DataType.FullName == _INT_TYPE_NAME)))
+                {
+                    ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string numericSql = ((BasicField)field.Parameters[0]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
+
+                    if (field.Parameters.Count == 1)
+                    {
+                        return new ExpressionInfo($"round({numericSql}, 0)", OperationType.Call);
+                    }
+                    else
+                    {
+                        ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                        string lengthSql = ((BasicField)field.Parameters[1]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+
+                        return new ExpressionInfo($"round({numericSql}, {lengthSql})", OperationType.Call);
+                    }
+                }
+                //Math.Floor 、 Math.Ceiling 或 Math.Abs 函数
+                else if ((field.MethodInfo.Name == "Floor" || field.MethodInfo.Name == "Ceiling" || field.MethodInfo.Name == "Abs") && field.Parameters != null && field.Parameters.Count == 1)
+                {
+                    ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string numericSql = ((BasicField)field.Parameters[0]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"{field.MethodInfo.Name.ToLower()}({numericSql})", OperationType.Call);
+                }
+                //Math.Pow 函数
+                else if (field.MethodInfo.Name == "Pow" && field.Parameters != null && field.Parameters.Count == 2)
+                {
+                    ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                    ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string numericSql = ((BasicField)field.Parameters[0]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
+                    string powerSql = ((BasicField)field.Parameters[1]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+
+                    return new ExpressionInfo($"power({numericSql}, {powerSql})", OperationType.Call);
                 }
             }
             //如果是 DBFun 类的函数
