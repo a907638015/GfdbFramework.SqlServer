@@ -1752,5 +1752,14 @@ namespace GfdbFramework.SqlServer
 
             return createSql.ToString();
         }
+
+        /// <summary>
+        /// 生成一个用于查询所有已存在数据表的 Sql 语句。
+        /// </summary>
+        /// <returns>创建好用于查询所有已存在数据表的 Sql 语句。</returns>
+        internal string GenerateQueryAllTableSql()
+        {
+            return "select [name] from sysobjects where xtype='u'";
+        }
     }
 }

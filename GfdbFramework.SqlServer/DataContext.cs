@@ -1,4 +1,5 @@
 ﻿using System;
+using GfdbFramework.Interface;
 
 namespace GfdbFramework.SqlServer
 {
@@ -8,6 +9,7 @@ namespace GfdbFramework.SqlServer
     public class DataContext : Realize.DataContext
     {
         private static readonly Type _NullableType = typeof(int?).GetGenericTypeDefinition();
+        private IReadOnlyList<string> _TableNames = null;
 
         /// <summary>
         /// 使用指定的内部版本号以及数据库连接字符串初始化一个新的 <see cref="DataContext"/> 类实例。
@@ -164,6 +166,34 @@ namespace GfdbFramework.SqlServer
         /// 获取当前所操作数据库的发行版本名称。
         /// </summary>
         public override string ReleaseName { get; }
+
+        /// <summary>
+        /// 获取当前所操作数据库中所有已存在的表名。
+        /// </summary>
+        public override IReadOnlyList<string> TableNames
+        {
+            get
+            {
+                if (_TableNames == null)
+                {
+                    System.Collections.Generic.List<string> result = null;
+
+                    ((IDataContext)this).DatabaseOperation.ExecuteReader(((SqlFactory)SqlFactory).GenerateQueryAllTableSql(), dr =>
+                    {
+                        if (result == null)
+                            result = new System.Collections.Generic.List<string>();
+
+                        result.Add(dr["name"]?.ToString());
+
+                        return true;
+                    });
+
+                    _TableNames = new Realize.ReadOnlyList<string>(result);
+                }
+
+                return _TableNames;
+            }
+        }
 
         /// <summary>
         /// 将指定的 .NET 基础数据类型转换成映射到数据库后的默认数据类型（如：System.Int32 应当返回 int，System.String 可返回 varchar(255)）。
