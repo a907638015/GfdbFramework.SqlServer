@@ -60,50 +60,59 @@ namespace GfdbFramework.SqlServer
         {
             autoincrementValue = default;
 
-            OpenConnection(ConnectionOpenedMode.Auto);
-
             InitCommand(commandText, commandType, parameters);
 
-            int result = _Command.ExecuteNonQuery();
+            OpenConnection(ConnectionOpenedMode.Auto);
 
-            CloseConnection(ConnectionOpenedMode.Auto);
-
-            if (!ignoreAutoincrementValue)
+            try
             {
-                InitCommand("select @@identity", CommandType.Text, null);
+                int result = _Command.ExecuteNonQuery();
 
-                object value = _Command.ExecuteScalar();
+                if (!ignoreAutoincrementValue)
+                {
+                    InitCommand("select @@identity", CommandType.Text, null);
 
-                if (value == null || value == DBNull.Value)
-                    throw new Exception(string.Format("在执行指定命令后未能获取到自增字段的值，具体命令为：{0}", commandText));
+                    object value = _Command.ExecuteScalar();
 
-                if (value is int intValue)
-                    autoincrementValue = intValue;
-                else if (value is long longValue)
-                    autoincrementValue = longValue;
-                else if (value is short shortValue)
-                    autoincrementValue = shortValue;
-                else if (value is byte byteValue)
-                    autoincrementValue = byteValue;
-                else if (value is uint uintValue)
-                    autoincrementValue = uintValue;
-                else if (value is ulong ulongValue)
-                    autoincrementValue = (long)ulongValue;
-                else if (value is ushort ushortValue)
-                    autoincrementValue = ushortValue;
-                else if (value is sbyte sbyteValue)
-                    autoincrementValue = sbyteValue;
-                else if (value is decimal decimalValue)
-                    autoincrementValue = (long)decimalValue;
-                else if (value is double doubleValue)
-                    autoincrementValue = (long)doubleValue;
-                else if (value is float floatValue)
-                    autoincrementValue = (long)floatValue;
-                else
-                    throw new Exception(string.Format("在执行指定命令后获取到自增字段的值类型不正确，具体命令为：{0}，获取到的自增字段值为：{1}", commandText, value));
+                    if (value == null || value == DBNull.Value)
+                        throw new Exception(string.Format("在执行指定命令后未能获取到自增字段的值，具体命令为：{0}", commandText));
+
+                    if (value is int intValue)
+                        autoincrementValue = intValue;
+                    else if (value is long longValue)
+                        autoincrementValue = longValue;
+                    else if (value is short shortValue)
+                        autoincrementValue = shortValue;
+                    else if (value is byte byteValue)
+                        autoincrementValue = byteValue;
+                    else if (value is uint uintValue)
+                        autoincrementValue = uintValue;
+                    else if (value is ulong ulongValue)
+                        autoincrementValue = (long)ulongValue;
+                    else if (value is ushort ushortValue)
+                        autoincrementValue = ushortValue;
+                    else if (value is sbyte sbyteValue)
+                        autoincrementValue = sbyteValue;
+                    else if (value is decimal decimalValue)
+                        autoincrementValue = (long)decimalValue;
+                    else if (value is double doubleValue)
+                        autoincrementValue = (long)doubleValue;
+                    else if (value is float floatValue)
+                        autoincrementValue = (long)floatValue;
+                    else
+                        throw new Exception(string.Format("在执行指定命令后获取到自增字段的值类型不正确，具体命令为：{0}，获取到的自增字段值为：{1}", commandText, value));
+                }
+
+                return result;
             }
-
-            return result;
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                CloseConnection(ConnectionOpenedMode.Auto);
+            }
         }
 
         /// <summary>
@@ -182,15 +191,22 @@ namespace GfdbFramework.SqlServer
         /// <returns>执行该命令得到的结果集中第一行第一列的值。</returns>
         public object ExecuteScalar(string commandText, CommandType commandType, Interface.IReadOnlyList<DbParameter> parameters)
         {
-            OpenConnection(ConnectionOpenedMode.Auto);
-
             InitCommand(commandText, commandType, parameters);
 
-            object result = _Command.ExecuteScalar();
+            OpenConnection(ConnectionOpenedMode.Auto);
 
-            CloseConnection(ConnectionOpenedMode.Auto);
-
-            return result;
+            try
+            {
+                return _Command.ExecuteScalar();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                CloseConnection(ConnectionOpenedMode.Auto);
+            }
         }
 
         /// <summary>
@@ -223,17 +239,26 @@ namespace GfdbFramework.SqlServer
         /// <param name="readerHandler">处理结果集中每一行数据的处理函数（若该函数返回 false 则忽略后续的数据行不再回调此处理函数）。</param>
         public void ExecuteReader(string commandText, CommandType commandType, Interface.IReadOnlyList<DbParameter> parameters, Func<DbDataReader, bool> readerHandler)
         {
-            OpenConnection(ConnectionOpenedMode.Auto);
-
             InitCommand(commandText, commandType, parameters);
 
-            SqlDataReader dataReader = _Command.ExecuteReader();
+            OpenConnection(ConnectionOpenedMode.Auto);
 
-            while (dataReader.Read() && readerHandler(dataReader)) { }
+            try
+            {
+                SqlDataReader dataReader = _Command.ExecuteReader();
 
-            dataReader.Close();
+                while (dataReader.Read() && readerHandler(dataReader)) { }
 
-            CloseConnection(ConnectionOpenedMode.Auto);
+                dataReader.Close();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                CloseConnection(ConnectionOpenedMode.Auto);
+            }
         }
 
         /// <summary>
