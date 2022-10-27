@@ -178,7 +178,7 @@ namespace GfdbFramework.SqlServer
                 {
                     System.Collections.Generic.List<string> result = null;
 
-                    ((IDataContext)this).DatabaseOperation.ExecuteReader(((SqlFactory)SqlFactory).GenerateQueryAllTableSql(), dr =>
+                    ((IDataContext)this).DatabaseOperation.ExecuteReader(((SqlFactory)((IDataContext)this).SqlFactory).GenerateQueryAllTableSql(), dr =>
                     {
                         if (result == null)
                             result = new System.Collections.Generic.List<string>();
