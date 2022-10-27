@@ -60,9 +60,9 @@ namespace GfdbFramework.SqlServer
         {
             autoincrementValue = default;
 
-            InitCommand(commandText, commandType, parameters);
-
             OpenConnection(ConnectionOpenedMode.Auto);
+
+            InitCommand(commandText, commandType, parameters);
 
             try
             {
@@ -191,9 +191,9 @@ namespace GfdbFramework.SqlServer
         /// <returns>执行该命令得到的结果集中第一行第一列的值。</returns>
         public object ExecuteScalar(string commandText, CommandType commandType, Interface.IReadOnlyList<DbParameter> parameters)
         {
-            InitCommand(commandText, commandType, parameters);
-
             OpenConnection(ConnectionOpenedMode.Auto);
+
+            InitCommand(commandText, commandType, parameters);
 
             try
             {
@@ -239,9 +239,9 @@ namespace GfdbFramework.SqlServer
         /// <param name="readerHandler">处理结果集中每一行数据的处理函数（若该函数返回 false 则忽略后续的数据行不再回调此处理函数）。</param>
         public void ExecuteReader(string commandText, CommandType commandType, Interface.IReadOnlyList<DbParameter> parameters, Func<DbDataReader, bool> readerHandler)
         {
-            InitCommand(commandText, commandType, parameters);
-
             OpenConnection(ConnectionOpenedMode.Auto);
+
+            InitCommand(commandText, commandType, parameters);
 
             try
             {
@@ -300,11 +300,21 @@ namespace GfdbFramework.SqlServer
 
             InitCommand(new SqlFactory().GenerateCreateTableSql(dataSource), CommandType.Text, null);
 
-            _Command.ExecuteNonQuery();
+            try
+            {
+                _Command.ExecuteNonQuery();
 
-            CloseConnection(ConnectionOpenedMode.Auto);
+                return true;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                CloseConnection(ConnectionOpenedMode.Auto);
+            }
 
-            return true;
         }
 
         /// <summary>
