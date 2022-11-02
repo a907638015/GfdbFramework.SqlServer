@@ -1326,6 +1326,77 @@ namespace GfdbFramework.SqlServer
         }
 
         /// <summary>
+        /// 初始化指定 Switch 分支字段的 Sql 表示信息。
+        /// </summary>
+        /// <param name="dataContext">数据操作上下文对象。</param>
+        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
+        /// <param name="field">待生成 Sql 表示信息的字段。</param>
+        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
+        /// <returns>生成好的表示 Sql 信息。</returns>
+        public ExpressionInfo InitSwitchField(IDataContext dataContext, DataSource.DataSource dataSource, SwitchField field, Func<object, string> addParameter)
+        {
+            field.SwitchValue.InitExpressionSQL(dataContext, dataSource, addParameter);
+            field.DefaultBody?.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+            string switchValueSql = field.SwitchValue.ExpressionInfo.Type == OperationType.Subtract || Helper.CheckIsPriority(OperationType.Equal, field.SwitchValue.ExpressionInfo.Type, false) ? $"({field.SwitchValue.ExpressionInfo.SQL})" : field.SwitchValue.ExpressionInfo.SQL;
+
+            if (field.Cases != null && field.Cases.Count > 0)
+            {
+                StringBuilder sql = new StringBuilder();
+
+                sql.Append($"case");
+
+                foreach (var item in field.Cases)
+                {
+                    sql.Append(" when ");
+
+                    int index = 0;
+
+                    foreach (var testValueField in item.TestValues)
+                    {
+                        testValueField.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                        string testValueSql = testValueField.ExpressionInfo.Type == OperationType.Subtract || Helper.CheckIsPriority(OperationType.Equal, testValueField.ExpressionInfo.Type, true) ? $"({testValueField.ExpressionInfo.SQL})" : testValueField.ExpressionInfo.SQL;
+
+                        if (index > 0)
+                            sql.Append(" or ");
+
+                        sql.Append($"{switchValueSql} = {testValueSql}");
+
+                        index++;
+                    }
+
+                    sql.Append(" then ");
+
+                    item.Body.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    if (item.Body.Type == FieldType.Subquery)
+                        sql.Append($"({item.Body.ExpressionInfo.SQL})");
+                    else
+                        sql.Append(item.Body.ExpressionInfo.SQL);
+                }
+
+                if (field.DefaultBody != null)
+                {
+                    sql.Append(" else ");
+
+                    if (field.DefaultBody.ExpressionInfo.Type == OperationType.Subtract)
+                        sql.Append($"({field.DefaultBody.ExpressionInfo.SQL})");
+                    else
+                        sql.Append(field.DefaultBody.ExpressionInfo.SQL);
+                }
+
+                sql.Append(" end");
+
+                return new ExpressionInfo(sql.ToString(), OperationType.Default);
+            }
+            else
+            {
+                return field.DefaultBody.ExpressionInfo;
+            }
+        }
+
+        /// <summary>
         /// 生成指定数据表的插入 Sql 语句。
         /// </summary>
         /// <param name="dataContext">数据操作上下文对象。</param>
