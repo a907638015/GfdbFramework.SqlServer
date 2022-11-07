@@ -1832,5 +1832,12 @@ namespace GfdbFramework.SqlServer
         {
             return "select [name] from sysobjects where xtype='u'";
         }
+
+        /// <summary>
+        /// 释放当前对象所占用的资源信息。
+        /// </summary>
+        public void Dispose()
+        {
+        }
     }
 }
