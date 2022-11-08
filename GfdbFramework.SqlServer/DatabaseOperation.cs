@@ -426,7 +426,7 @@ namespace GfdbFramework.SqlServer
             {
                 if (openedMode >= _OpenedMode)
                 {
-                    if (_Connection.State == ConnectionState.Connecting || _Connection.State == ConnectionState.Executing)
+                    if (_Connection.State != ConnectionState.Closed)
                         _Connection.Close();
 
                     _OpenedMode = ConnectionOpenedMode.Auto;
