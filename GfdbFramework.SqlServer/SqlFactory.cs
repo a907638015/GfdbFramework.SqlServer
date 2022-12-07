@@ -594,15 +594,23 @@ namespace GfdbFramework.SqlServer
                             switch (binaryField.OperationType)
                             {
                                 case OperationType.Equal:
-                                    if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && binaryField.Right.DataType.FullName == _STRING_TYPE_NAME)
+                                    if (binaryField.Left.Type == FieldType.Constant && ((ConstantField)binaryField.Left).Value == null)
+                                        return new ExpressionInfo($"{rightSql} is null", OperationType.Equal);
+                                    else if (binaryField.Right.Type == FieldType.Constant && ((ConstantField)binaryField.Right).Value == null)
+                                        return new ExpressionInfo($"{leftSql} is null", OperationType.Equal);
+                                    else if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && binaryField.Right.DataType.FullName == _STRING_TYPE_NAME)
                                         return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} = {rightSql}", OperationType.Equal);
-
-                                    return new ExpressionInfo($"{leftSql} = {rightSql}", OperationType.Equal);
+                                    else
+                                        return new ExpressionInfo($"{leftSql} = {rightSql}", OperationType.Equal);
                                 case OperationType.NotEqual:
-                                    if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && binaryField.Right.DataType.FullName == _STRING_TYPE_NAME)
+                                    if (binaryField.Left.Type == FieldType.Constant && ((ConstantField)binaryField.Left).Value == null)
+                                        return new ExpressionInfo($"{rightSql} is not null", OperationType.NotEqual);
+                                    else if (binaryField.Right.Type == FieldType.Constant && ((ConstantField)binaryField.Right).Value == null)
+                                        return new ExpressionInfo($"{leftSql} is not null", OperationType.NotEqual);
+                                    else if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && binaryField.Right.DataType.FullName == _STRING_TYPE_NAME)
                                         return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} != {rightSql}", OperationType.Equal);
-
-                                    return new ExpressionInfo($"{leftSql} != {rightSql}", OperationType.NotEqual);
+                                    else
+                                        return new ExpressionInfo($"{leftSql} != {rightSql}", OperationType.NotEqual);
                                 case OperationType.LessThan:
                                     return new ExpressionInfo($"{leftSql} < {rightSql}", OperationType.LessThan);
                                 case OperationType.LessThanOrEqual:
@@ -650,6 +658,20 @@ namespace GfdbFramework.SqlServer
                         return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) {checkString} 1", OperationType.Call);
                     else
                         return new ExpressionInfo($"charIndex({searchString}, {objectSql}) {checkString} 1", OperationType.Call);
+                }
+                //string 静态的 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法
+                else if (methodField.ObjectField == null && methodField.Parameters != null && methodField.Parameters.Count == 1 && methodField.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && methodField.Parameters[0] is BasicField && (methodField.MethodInfo.Name == "IsNullOrEmpty" || methodField.MethodInfo.Name == "IsNullOrWhiteSpace") && field.DataType.FullName == _STRING_TYPE_NAME)
+                {
+                    parameter = (BasicField)methodField.Parameters[0];
+
+                    parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                    string parameterString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
+
+                    if (methodField.MethodInfo.Name == "IsNullOrEmpty")
+                        return new ExpressionInfo($"{parameterString} is null or {parameterString} = ''", OperationType.Or);
+                    else
+                        return new ExpressionInfo($"{parameterString} is null or trim({parameterString}) = ''", OperationType.Or);
                 }
             }
 
@@ -1224,7 +1246,14 @@ namespace GfdbFramework.SqlServer
                     return new ExpressionInfo($"convert(uniqueidentifier,{parameterSql})", OperationType.Call);
                 }
             }
-
+            //字符串静态 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法
+            else if (field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && field.Parameters[0] is BasicField basicField && (field.MethodInfo.Name == "IsNullOrEmpty" || field.MethodInfo.Name == "IsNullOrWhiteSpace") && field.DataType.FullName == _STRING_TYPE_NAME)
+            {
+                if (dataContext.BuildNumber >= 684)
+                    return new ExpressionInfo($"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))", OperationType.Call);
+                else
+                    return new ExpressionInfo($"case when {field.BooleanInfo.SQL} then convert(bit, 1) else convert(bit, 0) end", OperationType.Default);
+            }
             throw new Exception($"未能将调用 {field.MethodInfo.DeclaringType.FullName} 类中的 {field.MethodInfo.Name} 方法字段转换成 Sql 表示信息");
         }
 
