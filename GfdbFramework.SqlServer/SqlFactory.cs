@@ -674,7 +674,7 @@ namespace GfdbFramework.SqlServer
 
                 unaryField.Operand.InitExpressionSQL(dataContext, dataSource, unaryField.Operand.Type != FieldType.Original && unaryField.Operand.Type != FieldType.Quote, addParameter);
 
-                string operandSql = unaryField.Operand.Type == FieldType.Subquery || (unaryField.Operand.Type != FieldType.Original && unaryField.Operand.Type != FieldType.Quote) || Helper.CheckIsPriority(OperationType.Equal, unaryField.Operand.ExpressionInfo.Type, false) ? $"({unaryField.Operand.ExpressionInfo.SQL})" : unaryField.Operand.ExpressionInfo.SQL;
+                string operandSql = unaryField.Operand.Type == FieldType.Subquery || (unaryField.Operand.Type != FieldType.Original && unaryField.Operand.Type != FieldType.Quote && Helper.CheckIsPriority(OperationType.Equal, unaryField.Operand.ExpressionInfo.Type, false)) ? $"({unaryField.Operand.ExpressionInfo.SQL})" : unaryField.Operand.ExpressionInfo.SQL;
 
                 return new ExpressionInfo($"{operandSql} = 0", OperationType.Equal);
             }
