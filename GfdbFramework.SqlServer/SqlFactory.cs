@@ -662,10 +662,10 @@ namespace GfdbFramework.SqlServer
                             string searchString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
                             string checkString = operandMethodField.MethodInfo.Name == "StartsWith" ? "!=" : "<";
 
-                            if (!dataContext.IsCaseSensitive)
-                                return new ExpressionInfo($"instr(lower({objectSql}), lower({searchString})) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
+                            if (dataContext.IsCaseSensitive)
+                                return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
                             else
-                                return new ExpressionInfo($"instr({objectSql}, {searchString}) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
+                                return new ExpressionInfo($"charIndex({searchString}, {objectSql}) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
                         }
                     }
                 }
