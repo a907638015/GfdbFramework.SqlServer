@@ -634,6 +634,42 @@ namespace GfdbFramework.SqlServer
             {
                 UnaryField unaryField = (UnaryField)field;
 
+                if (unaryField.Operand.Type == FieldType.Method)
+                {
+                    MethodField operandMethodField = (MethodField)unaryField.Operand;
+
+                    if (operandMethodField.MethodInfo.ReflectedType.FullName == _STRING_TYPE_NAME && operandMethodField.Parameters != null && operandMethodField.Parameters.Count == 1 && operandMethodField.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && operandMethodField.Parameters[0] is BasicField parameter)
+                    {
+                        //对 string 静态的 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法取反时做特殊操作
+                        if ((operandMethodField.MethodInfo.Name == "IsNullOrEmpty" || operandMethodField.MethodInfo.Name == "IsNullOrWhiteSpace") && operandMethodField.ObjectField == null)
+                        {
+                            parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                            string parameterString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
+
+                            if (operandMethodField.MethodInfo.Name == "IsNullOrEmpty")
+                                return new ExpressionInfo($"{parameterString} is not null and {parameterString} != ''", OperationType.And);
+                            else
+                                return new ExpressionInfo($"{parameterString} is not null and trim({parameterString}) != ''", OperationType.And);
+                        }
+                        //对 string  类型的 StartsWith 或 Contains 方法取反时做特殊操作
+                        else if (operandMethodField.ObjectField != null && operandMethodField.ObjectField is BasicField basicField && (operandMethodField.MethodInfo.Name == "StartsWith" || operandMethodField.MethodInfo.Name == "Contains"))
+                        {
+                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                            parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
+
+                            string objectSql = basicField.Type == FieldType.Subquery || Helper.CheckIsPriority(basicField.ExpressionInfo.Type, OperationType.Subtract, true) ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                            string searchString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
+                            string checkString = operandMethodField.MethodInfo.Name == "StartsWith" ? "!=" : "<";
+
+                            if (!dataContext.IsCaseSensitive)
+                                return new ExpressionInfo($"instr(lower({objectSql}), lower({searchString})) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
+                            else
+                                return new ExpressionInfo($"instr({objectSql}, {searchString}) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
+                        }
+                    }
+                }
+
                 unaryField.Operand.InitExpressionSQL(dataContext, dataSource, unaryField.Operand.Type != FieldType.Original && unaryField.Operand.Type != FieldType.Quote, addParameter);
 
                 string operandSql = unaryField.Operand.Type == FieldType.Subquery || (unaryField.Operand.Type != FieldType.Original && unaryField.Operand.Type != FieldType.Quote) || Helper.CheckIsPriority(OperationType.Equal, unaryField.Operand.ExpressionInfo.Type, false) ? $"({unaryField.Operand.ExpressionInfo.SQL})" : unaryField.Operand.ExpressionInfo.SQL;
@@ -645,7 +681,7 @@ namespace GfdbFramework.SqlServer
                 MethodField methodField = (MethodField)field;
 
                 //string 类型的 StartsWith 或 Contains 方法，不支持多参数的 StartsWith 或 Contains 方法
-                if (methodField.ObjectField != null && methodField.ObjectField is BasicField basicField && (methodField.MethodInfo.Name == "StartsWith" || methodField.MethodInfo.Name == "Contains") && methodField.Parameters != null && methodField.Parameters.Count == 1 && methodField.Parameters[0] is BasicField parameter)
+                if (methodField.ObjectField != null && methodField.MethodInfo.ReflectedType.FullName == _STRING_TYPE_NAME && methodField.ObjectField is BasicField basicField && (methodField.MethodInfo.Name == "StartsWith" || methodField.MethodInfo.Name == "Contains") && methodField.Parameters != null && methodField.Parameters.Count == 1 && methodField.Parameters[0] is BasicField parameter)
                 {
                     basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
                     parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
@@ -655,12 +691,12 @@ namespace GfdbFramework.SqlServer
                     string checkString = methodField.MethodInfo.Name == "StartsWith" ? "=" : ">=";
 
                     if (dataContext.IsCaseSensitive)
-                        return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) {checkString} 1", OperationType.Call);
+                        return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) {checkString} 1", methodField.MethodInfo.Name == "StartsWith" ? OperationType.Equal : OperationType.GreaterThanOrEqual);
                     else
-                        return new ExpressionInfo($"charIndex({searchString}, {objectSql}) {checkString} 1", OperationType.Call);
+                        return new ExpressionInfo($"charIndex({searchString}, {objectSql}) {checkString} 1", methodField.MethodInfo.Name == "StartsWith" ? OperationType.Equal : OperationType.GreaterThanOrEqual);
                 }
                 //string 静态的 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法
-                else if (methodField.ObjectField == null && methodField.Parameters != null && methodField.Parameters.Count == 1 && methodField.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && methodField.Parameters[0] is BasicField && (methodField.MethodInfo.Name == "IsNullOrEmpty" || methodField.MethodInfo.Name == "IsNullOrWhiteSpace") && field.DataType.FullName == _STRING_TYPE_NAME)
+                else if (methodField.ObjectField == null && methodField.MethodInfo.ReflectedType.FullName == _STRING_TYPE_NAME && (methodField.MethodInfo.Name == "IsNullOrEmpty" || methodField.MethodInfo.Name == "IsNullOrWhiteSpace") && methodField.Parameters != null && methodField.Parameters.Count == 1 && methodField.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && methodField.Parameters[0] is BasicField)
                 {
                     parameter = (BasicField)methodField.Parameters[0];
 
@@ -1247,7 +1283,7 @@ namespace GfdbFramework.SqlServer
                 }
             }
             //字符串静态 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法
-            else if (field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && field.Parameters[0] is BasicField basicField && (field.MethodInfo.Name == "IsNullOrEmpty" || field.MethodInfo.Name == "IsNullOrWhiteSpace") && field.DataType.FullName == _STRING_TYPE_NAME)
+            else if (field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && field.Parameters[0] is BasicField basicField && (field.MethodInfo.Name == "IsNullOrEmpty" || field.MethodInfo.Name == "IsNullOrWhiteSpace") && field.MethodInfo.ReflectedType.FullName == _STRING_TYPE_NAME)
             {
                 if (dataContext.BuildNumber >= 684)
                     return new ExpressionInfo($"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))", OperationType.Call);
