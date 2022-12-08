@@ -110,6 +110,8 @@ namespace GfdbFramework.SqlServer
 
             string sql = GenerateQuerySql(dataContext, dataSource, dataSource.SelectField ?? dataSource.RootField, useFieldAlias, item =>
             {
+                item = item ?? DBNull.Value;
+
                 if (!pars.TryGetValue(item, out DbParameter dbParameter))
                 {
                     dbParameter = new SqlParameter($"P{pars.Count}", item);
@@ -1478,6 +1480,8 @@ namespace GfdbFramework.SqlServer
 
             string addParameterFun(object item)
             {
+                item = item ?? DBNull.Value;
+
                 if (!pars.TryGetValue(item, out DbParameter dbParameter))
                 {
                     dbParameter = new SqlParameter($"P{pars.Count}", item);
@@ -1574,6 +1578,8 @@ namespace GfdbFramework.SqlServer
 
                 string addParameterFun(object item)
                 {
+                    item = item ?? DBNull.Value;
+
                     if (!pars.TryGetValue(item, out DbParameter dbParameter))
                     {
                         dbParameter = new SqlParameter($"P{pars.Count}", item);
@@ -1621,6 +1627,8 @@ namespace GfdbFramework.SqlServer
 
             string addParameterFun(object item)
             {
+                item = item ?? DBNull.Value;
+
                 if (!pars.TryGetValue(item, out DbParameter dbParameter))
                 {
                     dbParameter = new SqlParameter($"P{pars.Count}", item);
