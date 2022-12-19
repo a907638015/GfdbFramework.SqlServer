@@ -580,8 +580,14 @@ namespace GfdbFramework.SqlServer
 
                         if (binaryField.OperationType == OperationType.AndAlso || binaryField.OperationType == OperationType.OrElse)
                         {
-                            string leftSql = binaryField.Left.Type == FieldType.Subquery || Helper.CheckIsPriority(binaryField.OperationType, binaryField.Left.BooleanInfo.Type, false) ? $"({binaryField.Left.BooleanInfo.SQL})" : binaryField.Left.BooleanInfo.SQL;
-                            string rightSql = binaryField.Right.Type == FieldType.Subquery || Helper.CheckIsPriority(binaryField.OperationType, binaryField.Right.BooleanInfo.Type, true) ? $"({binaryField.Right.BooleanInfo.SQL})" : binaryField.Right.BooleanInfo.SQL;
+                            string leftSql = binaryField.Left.BooleanInfo.SQL;
+                            string rightSql = binaryField.Right.BooleanInfo.SQL;
+
+                            if (binaryField.Left.Type == FieldType.Subquery || (binaryField.OperationType == OperationType.AndAlso && binaryField.Left.BooleanInfo.Type == OperationType.OrElse))
+                                leftSql = $"({leftSql})";
+
+                            if (binaryField.Right.Type == FieldType.Subquery || (binaryField.OperationType == OperationType.AndAlso && binaryField.Right.BooleanInfo.Type == OperationType.OrElse))
+                                rightSql = $"({rightSql})";
 
                             if (binaryField.OperationType == OperationType.AndAlso)
                                 return new ExpressionInfo($"{leftSql} and {rightSql}", OperationType.AndAlso);
