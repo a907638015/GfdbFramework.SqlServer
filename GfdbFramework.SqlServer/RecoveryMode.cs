@@ -5,7 +5,7 @@ using System.Text;
 namespace GfdbFramework.SqlServer
 {
     /// <summary>
-    /// 恢复模式枚举。
+    /// Sql Server 数据库恢复模式枚举。
     /// </summary>
     public enum RecoveryMode
     {

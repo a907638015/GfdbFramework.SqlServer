@@ -1,509 +1,325 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Data.SqlClient;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
-using GfdbFramework.Core;
+﻿using GfdbFramework.Core;
 using GfdbFramework.DataSource;
 using GfdbFramework.Enum;
 using GfdbFramework.Field;
 using GfdbFramework.Interface;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace GfdbFramework.SqlServer
 {
     /// <summary>
-    /// SqlServer 数据库的 Sql 创建工厂类。
+    /// Sql Server 数据库的 Sql 创建工厂类。
     /// </summary>
     public class SqlFactory : ISqlFactory
     {
-        private const string _CASE_SENSITIVE_MARK = "collate Chinese_PRC_CI_AI";
-        private const string _BOOL_TYPE_NAME = "System.Boolean";
-        private const string _STRING_TYPE_NAME = "System.String";
-        private const string _DATETIME_TYPE_NAME = "System.DateTime";
-        private const string _INT_TYPE_NAME = "System.Int32";
-        private const string _DOUBLE_TYPE_NAME = "System.Double";
-        private const string _FLOAT_TYPE_NAME = "System.Single";
-        private const string _SHORT_TYPE_NAME = "System.Int16";
-        private const string _BYTE_TYPE_NAME = "System.Byte";
-        private const string _LONG_TYPE_NAME = "System.Int64";
-        private const string _DECIMAL_TYPE_NAME = "System.Decimal";
-        private const string _GUID_TYPE_NAME = "System.Guid";
-        private const string _MATH_TYPE_NAME = "System.Math";
-        private static readonly string _DBFunCountMethodName = nameof(DBFun.Count);
-        private static readonly string _DBFunMaxMethodName = nameof(DBFun.Max);
-        private static readonly string _DBFunMinMethodName = nameof(DBFun.Min);
-        private static readonly string _DBFunSumMethodName = nameof(DBFun.Sum);
-        private static readonly string _DBFunAvgMethodName = nameof(DBFun.Avg);
-        private static readonly string _DBFunSTDevMethodName = nameof(DBFun.STDev);
-        private static readonly string _DBFunSTDevPMethodName = nameof(DBFun.STDevP);
-        private static readonly string _DBFunVarMethodName = nameof(DBFun.Var);
-        private static readonly string _DBFunVarPMethodName = nameof(DBFun.VarP);
-        private static readonly string _DBFunNowTimeMethodName = nameof(DBFun.NowTime);
-        private static readonly string _DBFunNewGuidMethodName = nameof(DBFun.NewGuid);
-        private static readonly string _DBFunNewIntMethodName = nameof(DBFun.NewInt);
-        private static readonly string _DBFunNewLongMethodName = nameof(DBFun.NewLong);
-        private static readonly string _DBFunDiffYearMethodName = nameof(DBFun.DiffYear);
-        private static readonly string _DBFunDiffMonthMethodName = nameof(DBFun.DiffMonth);
-        private static readonly string _DBFunDiffDayMethodName = nameof(DBFun.DiffDay);
-        private static readonly string _DBFunDiffHourMethodName = nameof(DBFun.DiffHour);
-        private static readonly string _DBFunDiffMinuteMethodName = nameof(DBFun.DiffMinute);
-        private static readonly string _DBFunDiffSecondMethodName = nameof(DBFun.DiffSecond);
-        private static readonly string _DBFunDiffMillisecondMethodName = nameof(DBFun.DiffMillisecond);
-        private static readonly string _DBFunAddYearMethodName = nameof(DBFun.AddYear);
-        private static readonly string _DBFunAddMonthMethodName = nameof(DBFun.AddMonth);
-        private static readonly string _DBFunAddDayMethodName = nameof(DBFun.AddDay);
-        private static readonly string _DBFunAddHourMethodName = nameof(DBFun.AddHour);
-        private static readonly string _DBFunAddMinuteMethodName = nameof(DBFun.AddMinute);
-        private static readonly string _DBFunAddSecondMethodName = nameof(DBFun.AddSecond);
-        private static readonly string _DBFunAddMillisecondMethodName = nameof(DBFun.AddMillisecond);
-        private static readonly Type _DBFunType = typeof(DBFun);
+        private const string _CASE_SENSITIVE_MARK = "collate Chinese_PRC_CS_AI";
+        private readonly string _DBFunCountMethodName = nameof(DBFun.Count);
+        private readonly string _DBFunMaxMethodName = nameof(DBFun.Max);
+        private readonly string _DBFunMinMethodName = nameof(DBFun.Min);
+        private readonly string _DBFunSumMethodName = nameof(DBFun.Sum);
+        private readonly string _DBFunAvgMethodName = nameof(DBFun.Avg);
+        private readonly string _DBFunSTDevMethodName = nameof(DBFun.STDev);
+        private readonly string _DBFunSTDevPMethodName = nameof(DBFun.STDevP);
+        private readonly string _DBFunVarMethodName = nameof(DBFun.Var);
+        private readonly string _DBFunVarPMethodName = nameof(DBFun.VarP);
+        private readonly string _DBFunNowTimeMethodName = nameof(DBFun.NowTime);
+        private readonly string _DBFunNewGuidMethodName = nameof(DBFun.NewGuid);
+        private readonly string _DBFunNewIntMethodName = nameof(DBFun.NewInt);
+        private readonly string _DBFunNewLongMethodName = nameof(DBFun.NewLong);
+        private readonly string _DBFunDiffYearMethodName = nameof(DBFun.DiffYear);
+        private readonly string _DBFunDiffMonthMethodName = nameof(DBFun.DiffMonth);
+        private readonly string _DBFunDiffDayMethodName = nameof(DBFun.DiffDay);
+        private readonly string _DBFunDiffHourMethodName = nameof(DBFun.DiffHour);
+        private readonly string _DBFunDiffMinuteMethodName = nameof(DBFun.DiffMinute);
+        private readonly string _DBFunDiffSecondMethodName = nameof(DBFun.DiffSecond);
+        private readonly string _DBFunDiffMillisecondMethodName = nameof(DBFun.DiffMillisecond);
+        private readonly string _DBFunAddYearMethodName = nameof(DBFun.AddYear);
+        private readonly string _DBFunAddMonthMethodName = nameof(DBFun.AddMonth);
+        private readonly string _DBFunAddDayMethodName = nameof(DBFun.AddDay);
+        private readonly string _DBFunAddHourMethodName = nameof(DBFun.AddHour);
+        private readonly string _DBFunAddMinuteMethodName = nameof(DBFun.AddMinute);
+        private readonly string _DBFunAddSecondMethodName = nameof(DBFun.AddSecond);
+        private readonly string _DBFunAddMillisecondMethodName = nameof(DBFun.AddMillisecond);
+        private readonly Type _StringType = typeof(string);
+        private readonly Type _BoolType = typeof(bool);
+        private readonly Type _IntType = typeof(int);
+        private readonly Type _UIntType = typeof(uint);
+        private readonly Type _LongType = typeof(long);
+        private readonly Type _ULongType = typeof(ulong);
+        private readonly Type _DoubleType = typeof(double);
+        private readonly Type _ShortType = typeof(short);
+        private readonly Type _UShortType = typeof(ushort);
+        private readonly Type _ByteType = typeof(byte);
+        private readonly Type _SByteType = typeof(sbyte);
+        private readonly Type _DecimalType = typeof(decimal);
+        private readonly Type _FloatType = typeof(float);
+        private readonly Type _GuidType = typeof(Guid);
+        private readonly Type _DateTimeType = typeof(DateTime);
+        private readonly Type _MathType = typeof(Math);
+        private readonly Type _DBFunType = typeof(DBFun);
 
         /// <summary>
-        /// 对指定的原始字段名、表名或视图名称进行编码。
+        /// 创建二元操作字段的基础表示 Sql 信息。
         /// </summary>
-        /// <param name="name">需要编码的原始字段名、表名或视图名称名称。</param>
-        /// <param name="type">名称类型。</param>
-        /// <returns>编码后的名称。</returns>
-        public string EncodeName(string name, NameType type)
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的二元操作字段。</param>
+        /// <returns>该二元操作字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateBinaryBasicSql(IParameterContext parameterContext, BinaryField field)
         {
-            return $"[{name}]";
-        }
-
-        /// <summary>
-        /// 使用指定的别名下标生成一个别名（必须保证不同下标生成的别名不同，相同下标生成的别名相同，且所生成的别名不得是数据库中的关键字）。
-        /// </summary>
-        /// <param name="aliasIndex">生成别名时的下标。</param>
-        /// <param name="type">需要生成别名的名称类型。</param>
-        /// <returns>使用指定别名下标生成好的别名。</returns>
-        public string GenerateAlias(int aliasIndex, NameType type)
-        {
-            return type == NameType.Field ? $"F{aliasIndex}" : type == NameType.View ? $"V{aliasIndex}" : $"T{aliasIndex}";
-        }
-
-        /// <summary>
-        /// 生成指定数据源所对应的 Sql 查询语句。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成查询 Sql 的数据源信息。</param>
-        /// <param name="parameters">生成 Sql 所需使用的参数集合。</param>
-        /// <returns>生成好的 Sql 查询语句。</returns>
-        public string GenerateQuerySql(IDataContext dataContext, BasicDataSource dataSource, out Interface.IReadOnlyList<DbParameter> parameters)
-        {
-            return GenerateQuerySql(dataContext, dataSource, true, out parameters);
-        }
-
-        /// <summary>
-        /// 生成指定数据源所对应的 Sql 查询语句。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成查询 Sql 的数据源信息。</param>
-        /// <param name="useFieldAlias">生成的查询语句是否应当应用上字段别名。</param>
-        /// <param name="parameters">生成 Sql 所需使用的参数集合。</param>
-        /// <returns>生成好的 Sql 查询语句。</returns>
-        public string GenerateQuerySql(IDataContext dataContext, BasicDataSource dataSource, bool useFieldAlias, out Interface.IReadOnlyList<DbParameter> parameters)
-        {
-            Dictionary<object, DbParameter> pars = new Dictionary<object, DbParameter>();
-
-            string sql = GenerateQuerySql(dataContext, dataSource, dataSource.SelectField ?? dataSource.RootField, useFieldAlias, item =>
+            if (field.IsBoolDataType)
             {
-                item = item ?? DBNull.Value;
-
-                if (!pars.TryGetValue(item, out DbParameter dbParameter))
-                {
-                    dbParameter = new SqlParameter($"P{pars.Count}", item);
-
-                    pars.Add(item, dbParameter);
-                }
-
-                return $"@{dbParameter.ParameterName}";
-            });
-
-            parameters = new Realize.ReadOnlyList<DbParameter>(pars.Values);
-
-            return sql;
-        }
-
-        /// <summary>
-        /// 生成从数据源中查询某一字段的 Sql 查询语句。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">查询字段所归属的数据源。</param>
-        /// <param name="selectField">待生成 Sql 的查询字段。</param>
-        /// <param name="useFieldAlias">生成的查询语句是否应当应用上字段别名。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的 Sql 查询语句。</returns>
-        private string GenerateQuerySql(IDataContext dataContext, BasicDataSource dataSource, Field.Field selectField, bool useFieldAlias, Func<object, string> addParameter)
-        {
-            StringBuilder sqlFields = new StringBuilder();
-            StringBuilder orderBy = new StringBuilder();
-            StringBuilder groupBy = new StringBuilder();
-            string sqlFrom = GenerateFromSql(dataContext, dataSource, false, addParameter);
-            string where = string.Empty;
-            string top = string.Empty;
-            string distinct = dataSource.IsDistinctly ? "distinct " : string.Empty;
-            string other = string.Empty;
-
-            AppendSelectField(dataContext, dataSource, selectField, sqlFields, new HashSet<Field.Field>(), useFieldAlias, addParameter);
-            dataSource.Where?.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-            if (dataSource.SortItems != null && dataSource.SortItems.Count > 0)
-            {
-                orderBy.Append(" order by ");
-
-                foreach (var item in dataSource.SortItems)
-                {
-                    if (orderBy.Length > 10)
-                        orderBy.Append(", ");
-
-                    item.Field.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                    if (item.Field.Type == FieldType.Subquery)
-                        orderBy.AppendFormat("({0})", item.Field.ExpressionInfo.SQL);
-                    else
-                        orderBy.Append(item.Field.ExpressionInfo.SQL);
-
-                    if (item.Type == SortType.Descending)
-                        orderBy.Append(" desc");
-                }
-            }
-
-            if (dataSource.GroupFields != null && dataSource.GroupFields.Count > 0)
-            {
-                groupBy.Append(" group by ");
-
-                foreach (var item in dataSource.GroupFields)
-                {
-                    if (groupBy.Length > 10)
-                        groupBy.Append(", ");
-
-                    item.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                    if (item.Type == FieldType.Subquery)
-                        groupBy.AppendFormat("({0})", item.ExpressionInfo.SQL);
-                    else
-                        groupBy.Append(item.ExpressionInfo.SQL);
-                }
-            }
-
-            if (dataSource.Where != null)
-            {
-                dataSource.Where.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                where = $" where {dataSource.Where.BooleanInfo.SQL}";
-            }
-
-            if (dataSource.Limit != null && dataSource.Limit.HasValue)
-            {
-                if (dataSource.Limit.Value.Start == 0)
-                {
-                    top = $"top {dataSource.Limit.Value.Count} ";
-                }
-                else if (dataContext.BuildNumber >= 684)        //Sql Server 2012 及以上版本用 offset fetch next 方式
-                {
-                    other = $" offset {dataSource.Limit.Value.Start} rows fetch next {dataSource.Limit.Value.Count} rows only";
-                }
-                else if (dataContext.BuildNumber >= 611)        //Sql Server 2005 及以上版本用 row_number() over() 方式
-                {
-                    if (orderBy.Length < 1)
-                        throw new Exception("低于 Sql Server 2012 版本的数据库在使用 Limit 功能时至少要设置有一个排序字段");
-
-                    return $"select * from (select {distinct}row_number() over({orderBy.ToString().TrimStart()}) as RowNumber, {sqlFields} from {sqlFrom}{where}{groupBy}) as LimitTable where RowNumber between {dataSource.Limit.Value.Start + 1} and {dataSource.Limit.Value.Start + dataSource.Limit.Value.Count}";
-                }
-                else
-                {
-                    throw new Exception("低于 Sql Server 2005 版本的数据库不支持 Limit 功能，请改用 Contains 方法实现");
-                }
-            }
-
-            return $"select {distinct}{top}{sqlFields} from {sqlFrom}{where}{groupBy}{orderBy}{other}";
-        }
-
-        /// <summary>
-        /// 生成指定数据源在被用作 Select 查询中的 From 数据源时的 Sql。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">查询字段所归属的数据源。</param>
-        /// <param name="forceQuery">若是原生数据源是否强制启用查询。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的 Sql 查询语句。</returns>
-        private string GenerateFromSql(IDataContext dataContext, DataSource.DataSource dataSource, bool forceQuery, Func<object, string> addParameter)
-        {
-            if (dataSource.Type == DataSourceType.Table || dataSource.Type == DataSourceType.View)
-            {
-                OriginalDataSource originalDataSource = (OriginalDataSource)dataSource;
-
-                if (forceQuery && originalDataSource.SelectField != null)
-                    return $"({GenerateQuerySql(dataContext, originalDataSource, originalDataSource.SelectField, true, addParameter)}) as {originalDataSource.Alias}";
-                else
-                    return $"{originalDataSource.Name} as {originalDataSource.Alias}";
-            }
-            else if (dataSource.Type == DataSourceType.QueryResult)
-            {
-                ResultDataSource resultDataSource = (ResultDataSource)dataSource;
-
-                if (forceQuery)
-                    return $"({GenerateQuerySql(dataContext, resultDataSource, resultDataSource.SelectField ?? resultDataSource.RootField, true, addParameter)}) as {resultDataSource.Alias}";
-                else
-                    return GenerateFromSql(dataContext, resultDataSource.FromDataSource, true, addParameter);
+                return BoolToBasicExpression(field.DataContext, field.GetBoolExpression(parameterContext));
             }
             else
             {
-                JoinDataSource joinDataSource = (JoinDataSource)dataSource;
+                ExpressionInfo left = field.Left.GetBasicExpression(parameterContext);
+                ExpressionInfo right = field.Right.GetBasicExpression(parameterContext);
 
-                string left = GenerateFromSql(dataContext, joinDataSource.Left, true, addParameter);
-                string right = GenerateFromSql(dataContext, joinDataSource.Right, true, addParameter);
+                string leftSql = left.Type == OperationType.Subquery || (field.OperationType != OperationType.Coalesce && field.OperationType != OperationType.Power && Helper.CheckIsPriority(field.OperationType == OperationType.LeftShift ? OperationType.Multiply : field.OperationType == OperationType.RightShift ? OperationType.Divide : field.OperationType, left.Type, false)) ? $"({left.SQL})" : left.SQL;
+                string rightSql = right.Type == OperationType.Subquery || (field.OperationType != OperationType.Coalesce && field.OperationType != OperationType.Power && Helper.CheckIsPriority(field.OperationType == OperationType.LeftShift ? OperationType.Multiply : field.OperationType == OperationType.RightShift ? OperationType.Divide : field.OperationType, (field.OperationType == OperationType.LeftShift || field.OperationType == OperationType.RightShift) && right.Type != OperationType.Subquery ? OperationType.Default : right.Type, true)) ? $"({right.SQL})" : right.SQL;
 
-                if (joinDataSource.Type == DataSourceType.CrossJoin)
+                switch (field.OperationType)
                 {
-                    return $"{left} cross join {right}";
+                    case OperationType.Add:
+                        return new ExpressionInfo($"{leftSql} + {rightSql}", field.OperationType);
+                    case OperationType.And:
+                        return new ExpressionInfo($"{leftSql} & {rightSql}", field.OperationType);
+                    case OperationType.Divide:
+                        return new ExpressionInfo($"{leftSql} / {rightSql}", field.OperationType);
+                    case OperationType.Coalesce:
+                        return new ExpressionInfo($"isnull({leftSql}, {rightSql})", OperationType.Call);
+                    case OperationType.ExclusiveOr:
+                        return new ExpressionInfo($"{leftSql} ^ {rightSql}", field.OperationType);
+                    case OperationType.LeftShift:
+                        return new ExpressionInfo($"{leftSql} * power(2, {rightSql})", OperationType.Multiply);
+                    case OperationType.Modulo:
+                        return new ExpressionInfo($"{leftSql} % {rightSql}", field.OperationType);
+                    case OperationType.Multiply:
+                        return new ExpressionInfo($"{leftSql} * {rightSql}", field.OperationType);
+                    case OperationType.Or:
+                        return new ExpressionInfo($"{leftSql} | {rightSql}", field.OperationType);
+                    case OperationType.Power:
+                        return new ExpressionInfo($"power({leftSql}, {rightSql})", OperationType.Call);
+                    case OperationType.RightShift:
+                        return new ExpressionInfo($"{leftSql} / power(2, {rightSql})", OperationType.Divide);
+                    case OperationType.Subtract:
+                        return new ExpressionInfo($"{leftSql} - {rightSql}", field.OperationType);
+                    default:
+                        throw new Exception($"未能创建指定二元操作字段对应的基础表示信息，操作类型为：{field.OperationType}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 创建二元操作字段的布尔表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的二元操作字段。</param>
+        /// <returns>该二元操作字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateBinaryBoolSql(IParameterContext parameterContext, BinaryField field)
+        {
+            ExpressionInfo left;
+            ExpressionInfo right;
+
+            if (field.OperationType == OperationType.In || field.OperationType == OperationType.NotIn)
+            {
+                if (!field.Left.DataType.CheckIsBasicType())
+                    throw new Exception("对用于子查询或 Where 条件的 Contains 方法，被调用对象 IEnumerable<T> 的成员（T）类型必须是基础数据类型");
+
+                if (field.Right.Type == FieldType.Constant)
+                {
+                    left = field.Left.GetBasicExpression(parameterContext);
+
+                    object constantRight = ((ConstantField)field.Right).Value;
+                    string leftSql = Helper.CheckIsPriority(field.OperationType, left.Type, false) ? $"({left.SQL})" : left.SQL;
+                    string containType = field.OperationType == OperationType.NotIn ? "not in" : "in";
+
+                    //如果右侧集合是查询结果对象
+                    if (constantRight is Queryable queryable)
+                    {
+                        return new ExpressionInfo($"{leftSql} {containType} ({queryable.GetSql(parameterContext)})", field.OperationType);
+                    }
+                    //否则判断右侧是否是常量数组或可枚举对象
+                    else if ((field.Right.DataType.IsArray && field.Right.DataType.GetArrayRank() == 1) || field.Right.DataType.CheckIsEnumerable())
+                    {
+                        if (field.Left.DataType == _StringType && field.DataContext.IsCaseSensitive)
+                            leftSql = $"{leftSql} {_CASE_SENSITIVE_MARK}";
+
+                        StringBuilder collection = new StringBuilder();
+
+                        foreach (var item in (IEnumerable)constantRight)
+                        {
+                            if (collection.Length > 0)
+                                collection.Append(", ");
+
+                            collection.Append(parameterContext.Add(item));
+                        }
+
+                        return new ExpressionInfo($"{leftSql} {containType} ({collection})", OperationType.Default);
+                    }
                 }
                 else
                 {
-                    string joinType;
-
-                    switch (joinDataSource.Type)
-                    {
-                        case DataSourceType.LeftJoin:
-                            joinType = "left join";
-                            break;
-                        case DataSourceType.RightJoin:
-                            joinType = "right join";
-                            break;
-                        case DataSourceType.FullJoin:
-                            joinType = "full join";
-                            break;
-                        default:
-                            joinType = "inner join";
-                            break;
-                    }
-
-                    joinDataSource.On.InitExpressionSQL(dataContext, joinDataSource, addParameter);
-
-                    return $"{left} {joinType} {right} on {joinDataSource.On.BooleanInfo.SQL}";
+                    throw new Exception($"对用于子查询或 Where 条件的 Contains 方法，需要用于确认的集合对象必须是运行时常量或为 {nameof(Queryable)} 类型的查询对象");
                 }
             }
-        }
-
-        /// <summary>
-        /// 追加待查询字段信息到字段集合中。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">查询字段所归属的数据源。</param>
-        /// <param name="selectField">待追加的查询字段。</param>
-        /// <param name="sqlFields">用于保存查询字段信息的字符串构造器。</param>
-        /// <param name="appendedFields">已经追加过的字段集合。</param>
-        /// <param name="useFieldAlias">生成的查询字段是否应当应用上字段别名。</param>
-        /// <param name="addParameter">若查询字段需要添加参数时的添加方法。</param>
-        private void AppendSelectField(IDataContext dataContext, DataSource.DataSource dataSource, Field.Field selectField, StringBuilder sqlFields, HashSet<Field.Field> appendedFields, bool useFieldAlias, Func<object, string> addParameter)
-        {
-            if (!appendedFields.Contains(selectField))
+            else if (field.OperationType == OperationType.Equal || field.OperationType == OperationType.NotEqual)
             {
-                if (selectField.Type == FieldType.Object)
+                if (field.Left.Type == FieldType.Constant && ((ConstantField)field.Left).Value == null)
                 {
-                    ObjectField objectField = (ObjectField)selectField;
+                    if (field.Right.Type == FieldType.Constant && ((ConstantField)field.Right).Value == null)
+                        return new ExpressionInfo("1 = 1", OperationType.Equal);
 
-                    if (objectField.ConstructorInfo.Parameters != null && objectField.ConstructorInfo.Parameters.Count > 0)
-                    {
-                        foreach (var item in objectField.ConstructorInfo.Parameters)
-                        {
-                            AppendSelectField(dataContext, dataSource, item, sqlFields, appendedFields, useFieldAlias, addParameter);
-                        }
-                    }
+                    right = field.Right.GetBasicExpression(parameterContext);
 
-                    if (objectField.Members != null && objectField.Members.Count > 0)
-                    {
-                        foreach (var item in objectField.Members)
-                        {
-                            AppendSelectField(dataContext, dataSource, item.Value.Field, sqlFields, appendedFields, useFieldAlias, addParameter);
-                        }
-                    }
+                    return new ExpressionInfo($"{right.SQL} is {(field.OperationType == OperationType.Equal ? "null" : "not null")}", field.OperationType);
                 }
-                else if (selectField.Type == FieldType.Collection)
+                else if (field.Right.Type == FieldType.Constant && ((ConstantField)field.Right).Value == null)
                 {
-                    CollectionField collectionField = (CollectionField)selectField;
+                    left = field.Left.GetBasicExpression(parameterContext);
 
-                    if (collectionField.ConstructorInfo.Parameters != null && collectionField.ConstructorInfo.Parameters.Count > 0)
-                    {
-                        foreach (var item in collectionField.ConstructorInfo.Parameters)
-                        {
-                            AppendSelectField(dataContext, dataSource, item, sqlFields, appendedFields, useFieldAlias, addParameter);
-                        }
-                    }
-
-                    foreach (var item in collectionField)
-                    {
-                        AppendSelectField(dataContext, dataSource, item, sqlFields, appendedFields, useFieldAlias, addParameter);
-                    }
+                    return new ExpressionInfo($"{left.SQL} is {(field.OperationType == OperationType.Equal ? "null" : "not null")}", field.OperationType);
                 }
-                else if (selectField is BasicField basicField)
+                else
                 {
-                    basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    left = field.Left.GetBasicExpression(parameterContext);
+                    right = field.Right.GetBasicExpression(parameterContext);
 
-                    if (sqlFields.Length > 0)
-                        sqlFields.Append(", ");
+                    string leftSql = Helper.CheckIsPriority(field.OperationType, left.Type, false) ? $"({left.SQL})" : left.SQL;
+                    string rightSql = Helper.CheckIsPriority(field.OperationType, right.Type, true) ? $"({right.SQL})" : right.SQL;
 
-                    if (basicField.Type == FieldType.Subquery)
-                        sqlFields.Append($"({basicField.ExpressionInfo.SQL})");
+                    if (field.DataContext.IsCaseSensitive && field.Left.DataType == _StringType && field.Right.DataType == _StringType)
+                        return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} {(field.OperationType == OperationType.Equal ? "=" : "!=")} {rightSql}", OperationType.Equal);
                     else
-                        sqlFields.Append(basicField.ExpressionInfo.SQL);
-
-                    if (useFieldAlias && !string.IsNullOrWhiteSpace(basicField.Alias))
-                        sqlFields.Append($" as {basicField.Alias}");
+                        return new ExpressionInfo($"{leftSql} {(field.OperationType == OperationType.Equal ? "=" : "!=")} {rightSql}", OperationType.Equal);
                 }
-
-                appendedFields.Add(selectField);
             }
+            else if (field.OperationType == OperationType.AndAlso || field.OperationType == OperationType.OrElse)
+            {
+                left = field.Left.GetBoolExpression(parameterContext);
+                right = field.Right.GetBoolExpression(parameterContext);
+
+                string leftSql = Helper.CheckIsPriority(field.OperationType, left.Type, false) ? $"({left.SQL})" : left.SQL;
+                string rightSql = Helper.CheckIsPriority(field.OperationType, right.Type, true) ? $"({right.SQL})" : right.SQL;
+
+                if (field.OperationType == OperationType.AndAlso)
+                    return new ExpressionInfo($"{leftSql} and {rightSql}", OperationType.AndAlso);
+                else
+                    return new ExpressionInfo($"{leftSql} or {rightSql}", OperationType.OrElse);
+            }
+            else
+            {
+                left = field.Left.GetBasicExpression(parameterContext);
+                right = field.Right.GetBasicExpression(parameterContext);
+                
+                string leftSql = Helper.CheckIsPriority(field.OperationType, left.Type, false) ? $"({left.SQL})" : left.SQL;
+                string rightSql = Helper.CheckIsPriority(field.OperationType, right.Type, true) ? $"({right.SQL})" : right.SQL;
+
+                switch (field.OperationType)
+                {
+                    case OperationType.LessThan:
+                        return new ExpressionInfo($"{leftSql} < {rightSql}", OperationType.LessThan);
+                    case OperationType.LessThanOrEqual:
+                        return new ExpressionInfo($"{leftSql} <= {rightSql}", OperationType.LessThanOrEqual);
+                    case OperationType.GreaterThan:
+                        return new ExpressionInfo($"{leftSql} > {rightSql}", OperationType.GreaterThan);
+                    case OperationType.GreaterThanOrEqual:
+                        return new ExpressionInfo($"{leftSql} >= {rightSql}", OperationType.GreaterThanOrEqual);
+                    case OperationType.Like:
+                    case OperationType.NotLike:
+                        if (field.DataContext.IsCaseSensitive)
+                            return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} {(field.OperationType == OperationType.Like ? "like" : "not like")} {rightSql}", field.OperationType);
+                        else
+                            return new ExpressionInfo($"{leftSql} {(field.OperationType == OperationType.Like ? "like" : "not like")} {rightSql}", field.OperationType);
+                }
+            }
+
+            throw new Exception($"未能创建指定二元操作字段对应布尔形态的表示信息，操作类型为：{field.OperationType}");
         }
 
         /// <summary>
-        /// 初始化指定二元操作字段的 Sql 表示信息。
+        /// 创建三元操作字段的基础表示 Sql 信息。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitBinaryField(IDataContext dataContext, DataSource.DataSource dataSource, BinaryField field, Func<object, string> addParameter)
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的三元操作字段。</param>
+        /// <returns>该三元操作字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateConditionalBasicSql(IParameterContext parameterContext, ConditionalField field)
         {
-            string rightSql = null;
-            string leftSql = null;
-            string sql = null;
+            var test = field.Test.GetBoolExpression(parameterContext);
+            var ifTrue = field.IfTrue.GetBasicExpression(parameterContext);
+            var ifFalse = field.IfFalse.GetBasicExpression(parameterContext);
 
-            if (field.DataType.FullName != _BOOL_TYPE_NAME)
-            {
-                field.Left.InitExpressionSQL(dataContext, dataSource, addParameter);
-                field.Right.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                leftSql = field.Left.Type == FieldType.Subquery || (field.OperationType != OperationType.Coalesce && field.OperationType != OperationType.Power && Helper.CheckIsPriority(field.OperationType == OperationType.LeftShift ? OperationType.Multiply : field.OperationType == OperationType.RightShift ? OperationType.Divide : field.OperationType, field.Left.ExpressionInfo.Type, false)) ? $"({field.Left.ExpressionInfo.SQL})" : field.Left.ExpressionInfo.SQL;
-                rightSql = field.Right.Type == FieldType.Subquery || (field.OperationType != OperationType.Coalesce && field.OperationType != OperationType.Power && Helper.CheckIsPriority(field.OperationType == OperationType.LeftShift ? OperationType.Multiply : field.OperationType == OperationType.RightShift ? OperationType.Divide : field.OperationType, field.Right.ExpressionInfo.Type, true)) ? $"({field.Right.ExpressionInfo.SQL})" : field.Right.ExpressionInfo.SQL;
-            }
-
-            OperationType useType = field.OperationType;
-
-            switch (field.OperationType)
-            {
-
-                case OperationType.Add:
-                    sql = $"{leftSql} + {rightSql}";
-                    break;
-                case OperationType.And:
-                    sql = $"{leftSql} & {rightSql}";
-                    break;
-                case OperationType.Divide:
-                    sql = $"{leftSql} / {rightSql}";
-                    break;
-                case OperationType.Coalesce:
-                    sql = $"isnull({leftSql}, {rightSql})";
-
-                    useType = OperationType.Call;
-                    break;
-                case OperationType.ExclusiveOr:
-                    sql = $"{leftSql} ^ {rightSql}";
-                    break;
-                case OperationType.GreaterThan:
-                case OperationType.GreaterThanOrEqual:
-                case OperationType.LessThan:
-                case OperationType.LessThanOrEqual:
-                case OperationType.Equal:
-                case OperationType.NotEqual:
-                case OperationType.NotIn:
-                case OperationType.In:
-                case OperationType.Like:
-                case OperationType.NotLike:
-                case OperationType.AndAlso:
-                case OperationType.OrElse:
-                    //大于等于Sql Server 2012时使用 iif 函数
-                    if (dataContext.BuildNumber >= 684)
-                    {
-                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))";
-
-                        useType = OperationType.Call;
-                    }
-                    else
-                    {
-                        sql = $"case when {field.BooleanInfo.SQL} then convert(bit, 1) else convert(bit, 0) end";
-
-                        useType = OperationType.Default;
-                    }
-                    break;
-                case OperationType.LeftShift:
-                    sql = $"{leftSql} * power(2, {rightSql})";
-
-                    useType = OperationType.Multiply;
-                    break;
-                case OperationType.Modulo:
-                    sql = $"{leftSql} % {rightSql}";
-                    break;
-                case OperationType.Multiply:
-                    sql = $"{leftSql} * {rightSql}";
-                    break;
-                case OperationType.Or:
-                    sql = $"{leftSql} | {rightSql}";
-                    break;
-                case OperationType.Power:
-                    sql = $"power({leftSql}, {rightSql})";
-
-                    useType = OperationType.Call;
-                    break;
-                case OperationType.RightShift:
-                    sql = $"{leftSql} / power(2, {rightSql})";
-
-                    useType = OperationType.Divide;
-                    break;
-                case OperationType.Subtract:
-                    sql = $"{leftSql} - {rightSql}";
-                    break;
-                case OperationType.ArrayIndex:
-                    throw new Exception("Sql Server 不支持数组或集合类型的字段操作");
-            }
-
-            return new ExpressionInfo(sql, useType);
-        }
-
-        /// <summary>
-        /// 初始化指定三元操作（条件操作）字段的 Sql 表示信息。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitConditionalField(IDataContext dataContext, DataSource.DataSource dataSource, ConditionalField field, Func<object, string> addParameter)
-        {
-            field.Test.InitExpressionSQL(dataContext, dataSource, addParameter);
-            field.IfTrue.InitExpressionSQL(dataContext, dataSource, addParameter);
-            field.IfFalse.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-            string testSql = field.Test.Type == FieldType.Subquery ? $"({field.Test.BooleanInfo.SQL})" : field.Test.BooleanInfo.SQL;
-            string ifTrueSql = field.IfTrue.Type == FieldType.Subquery ? $"({field.IfTrue.ExpressionInfo.SQL})" : field.IfTrue.ExpressionInfo.SQL;
-            string ifFalseSql = field.IfFalse.Type == FieldType.Subquery ? $"({field.IfFalse.ExpressionInfo.SQL})" : field.IfFalse.ExpressionInfo.SQL;
+            string testSql = test.Type == OperationType.Subquery ? $"({test.SQL})" : test.SQL;
+            string ifTrueSql = ifTrue.Type == OperationType.Subquery ? $"({ifTrue.SQL})" : ifTrue.SQL;
+            string ifFalseSql = ifFalse.Type == OperationType.Subquery ? $"({ifFalse.SQL})" : ifFalse.SQL;
 
             //大于等于Sql Server 2012时使用 iif 函数
-            if (dataContext.BuildNumber >= 684)
+            if (field.DataContext.BuildNumber >= 684)
                 return new ExpressionInfo($"iif({testSql}, {ifTrueSql}, {ifFalseSql})", OperationType.Call);
             else
                 return new ExpressionInfo($"case when {testSql} then ${ifTrueSql} else ${ifFalseSql} end", OperationType.Default);
         }
 
         /// <summary>
-        /// 初始化指定常量字段的 Sql 表示信息。
+        /// 创建三元操作字段的布尔表示 Sql 信息。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitConstantField(IDataContext dataContext, DataSource.DataSource dataSource, ConstantField field, Func<object, string> addParameter)
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的三元操作字段。</param>
+        /// <returns>该三元操作字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateConditionalBoolSql(IParameterContext parameterContext, ConditionalField field)
+        {
+            if (field.DataType == _BoolType)
+            {
+                if (field.IfTrue.Type == FieldType.Constant && field.IfFalse.Type == FieldType.Constant)
+                {
+                    bool ifTrue = (bool)((ConstantField)field.IfTrue).Value;
+                    bool ifFalse = (bool)((ConstantField)field.IfFalse).Value;
+
+                    if (ifTrue)
+                    {
+                        if (ifFalse)
+                            return new ExpressionInfo("1 = 1", OperationType.Equal);
+                        else
+                            return field.Test.GetBoolExpression(parameterContext);
+                    }
+                    else if (ifFalse)
+                    {
+                        return new ExpressionInfo($"{field.Test.GetBasicExpression(parameterContext)} = 0", OperationType.Equal);
+                    }
+                    else
+                    {
+                        return new ExpressionInfo("1 = 0", OperationType.Equal);
+                    }
+                }
+                else
+                {
+                    return new ExpressionInfo($"{field.GetBasicExpression(parameterContext).SQL} = 1", OperationType.Equal);
+                }
+            }
+
+            return BoolToBasicExpression(field.DataContext, field.GetBoolExpression(parameterContext));
+        }
+
+        /// <summary>
+        /// 创建常量字段的基础表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的常量字段。</param>
+        /// <returns>该常量字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateConstantBasicSql(IParameterContext parameterContext, ConstantField field)
         {
             //只有基础数据类型才能作为参数传入 Sql Server
             if (Helper.CheckIsBasicType(field.DataType))
-                return new ExpressionInfo(addParameter(field.Value), OperationType.Default);
+                return new ExpressionInfo(parameterContext.Add(field.Value), OperationType.Default);
             else if (field.Value is Queryable)
-                throw new Exception("Sql Server 子查询不支持多行数据返回，若要使用子查询，可在 Queryable 对象最后调用一次 First() 函数或 Last() 函数将其限定只返回一行数据");
+                throw new Exception($"Sql Server 子查询不支持多行数据返回，若要使用子查询，可在 {nameof(Queryable)} 对象最后调用一次 First() 函数或 Last() 函数将其限定只返回一行数据");
             else if (field.Value is MultipleJoin)
                 throw new Exception("子查询不支持直接返回多表关联查询对象（MultipleJoin），若要使用子查询，可在 MultipleJoin 对象上调用一次 Select 函数并再次调用 First 方法即可");
             else
@@ -511,241 +327,40 @@ namespace GfdbFramework.SqlServer
         }
 
         /// <summary>
-        /// 初始化指定基础数据类型字段被直接用做 Where、On、Case 等条件判定时的 Sql 表示信息（如原始 Bit 类型字段直接用作 Where 条件时需要写成 Table.FieldName = 1）。
+        /// 创建常量字段的布尔表示 Sql 信息。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">需要生成 Where、On、Case 等条件判定表示 Sql 信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好用于在 Where、On、Case 等条件判定时的 Sql 表示信息。</returns>
-        public ExpressionInfo InitFieldWhere(IDataContext dataContext, DataSource.DataSource dataSource, BasicField field, Func<object, string> addParameter)
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的常量字段。</param>
+        /// <returns>该常量字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateConstantBoolSql(IParameterContext parameterContext, ConstantField field)
         {
-            if (field.Type == FieldType.Binary)
-            {
-                BinaryField binaryField = (BinaryField)field;
-
-                //只有二元运算中的这几种操作可直接用于条件判定
-                if (binaryField.OperationType == OperationType.Equal
-                    || binaryField.OperationType == OperationType.NotEqual
-                    || binaryField.OperationType == OperationType.LessThan
-                    || binaryField.OperationType == OperationType.LessThanOrEqual
-                    || binaryField.OperationType == OperationType.GreaterThan
-                    || binaryField.OperationType == OperationType.GreaterThanOrEqual
-                    || binaryField.OperationType == OperationType.AndAlso
-                    || binaryField.OperationType == OperationType.OrElse
-                    || binaryField.OperationType == OperationType.In
-                    || binaryField.OperationType == OperationType.NotIn
-                    || binaryField.OperationType == OperationType.Like
-                    || binaryField.OperationType == OperationType.NotLike)
-                {
-                    binaryField.Left.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                    if (binaryField.OperationType == OperationType.In || binaryField.OperationType == OperationType.NotIn)
-                    {
-                        string containType = binaryField.OperationType == OperationType.NotIn ? "not in" : "in";
-                        string leftSql = binaryField.Left.Type == FieldType.Subquery || Helper.CheckIsPriority(binaryField.OperationType, binaryField.Left.ExpressionInfo.Type, false) ? $"({binaryField.Left.ExpressionInfo.SQL})" : binaryField.Left.ExpressionInfo.SQL;
-
-                        if (binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && dataContext.IsCaseSensitive)
-                            leftSql = $"{leftSql} {_CASE_SENSITIVE_MARK}";
-
-                        if (binaryField.Right.Type == FieldType.Subquery)
-                        {
-                            binaryField.Right.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                            return new ExpressionInfo($"{leftSql} {containType} ({binaryField.Right.ExpressionInfo.SQL})", binaryField.OperationType);
-                        }
-                        //如果是常量字段且常量字段的值是 IEnumerable 类型
-                        else if (binaryField.Right.Type == FieldType.Constant && ((binaryField.Right.DataType.IsArray && binaryField.Right.DataType.GetArrayRank() == 1 && Helper.CheckIsBasicType(binaryField.Right.DataType.GetElementType())) || (binaryField.Right.DataType.IsGenericType && binaryField.Right.DataType.GetGenericArguments().Length == 1)))
-                        {
-                            IEnumerable enumerable = (IEnumerable)((ConstantField)binaryField.Right).Value;
-
-                            StringBuilder collection = new StringBuilder();
-
-                            foreach (var item in enumerable)
-                            {
-                                if (collection.Length > 0)
-                                    collection.Append(", ");
-
-                                collection.Append(addParameter(item));
-                            }
-
-                            return new ExpressionInfo($"{leftSql} {containType} ({collection})", OperationType.Default);
-                        }
-
-                        throw new Exception("对用于子查询或 Where 条件的 Contains 方法，被调用对象 IEnumerable<T> 的成员（T）类型必须是基础数据类型");
-                    }
-                    else
-                    {
-                        binaryField.Right.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                        if (binaryField.OperationType == OperationType.AndAlso || binaryField.OperationType == OperationType.OrElse)
-                        {
-                            string leftSql = binaryField.Left.Type == FieldType.Subquery || Helper.CheckIsPriority(binaryField.OperationType, binaryField.Left.BooleanInfo.Type, false) ? $"({binaryField.Left.BooleanInfo.SQL})" : binaryField.Left.BooleanInfo.SQL;
-                            string rightSql = binaryField.Right.Type == FieldType.Subquery || Helper.CheckIsPriority(binaryField.OperationType, binaryField.Right.BooleanInfo.Type, true) ? $"({binaryField.Right.BooleanInfo.SQL})" : binaryField.Right.BooleanInfo.SQL;
-
-                            if (binaryField.OperationType == OperationType.AndAlso)
-                                return new ExpressionInfo($"{leftSql} and {rightSql}", OperationType.AndAlso);
-                            else
-                                return new ExpressionInfo($"{leftSql} or {rightSql}", OperationType.OrElse);
-                        }
-                        else
-                        {
-                            string leftSql = binaryField.Left.Type == FieldType.Subquery || Helper.CheckIsPriority(binaryField.OperationType, binaryField.Left.ExpressionInfo.Type, false) ? $"({binaryField.Left.ExpressionInfo.SQL})" : binaryField.Left.ExpressionInfo.SQL;
-                            string rightSql = binaryField.Right.Type == FieldType.Subquery || Helper.CheckIsPriority(binaryField.OperationType, binaryField.Right.ExpressionInfo.Type, true) ? $"({binaryField.Right.ExpressionInfo.SQL})" : binaryField.Right.ExpressionInfo.SQL;
-
-                            switch (binaryField.OperationType)
-                            {
-                                case OperationType.Equal:
-                                    if (binaryField.Left.Type == FieldType.Constant && ((ConstantField)binaryField.Left).Value == null)
-                                        return new ExpressionInfo($"{rightSql} is null", OperationType.Equal);
-                                    else if (binaryField.Right.Type == FieldType.Constant && ((ConstantField)binaryField.Right).Value == null)
-                                        return new ExpressionInfo($"{leftSql} is null", OperationType.Equal);
-                                    else if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && binaryField.Right.DataType.FullName == _STRING_TYPE_NAME)
-                                        return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} = {rightSql}", OperationType.Equal);
-                                    else
-                                        return new ExpressionInfo($"{leftSql} = {rightSql}", OperationType.Equal);
-                                case OperationType.NotEqual:
-                                    if (binaryField.Left.Type == FieldType.Constant && ((ConstantField)binaryField.Left).Value == null)
-                                        return new ExpressionInfo($"{rightSql} is not null", OperationType.NotEqual);
-                                    else if (binaryField.Right.Type == FieldType.Constant && ((ConstantField)binaryField.Right).Value == null)
-                                        return new ExpressionInfo($"{leftSql} is not null", OperationType.NotEqual);
-                                    else if (dataContext.IsCaseSensitive && binaryField.Left.DataType.FullName == _STRING_TYPE_NAME && binaryField.Right.DataType.FullName == _STRING_TYPE_NAME)
-                                        return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} != {rightSql}", OperationType.Equal);
-                                    else
-                                        return new ExpressionInfo($"{leftSql} != {rightSql}", OperationType.NotEqual);
-                                case OperationType.LessThan:
-                                    return new ExpressionInfo($"{leftSql} < {rightSql}", OperationType.LessThan);
-                                case OperationType.LessThanOrEqual:
-                                    return new ExpressionInfo($"{leftSql} <= {rightSql}", OperationType.LessThanOrEqual);
-                                case OperationType.GreaterThan:
-                                    return new ExpressionInfo($"{leftSql} > {rightSql}", OperationType.GreaterThan);
-                                case OperationType.GreaterThanOrEqual:
-                                    return new ExpressionInfo($"{leftSql} >= {rightSql}", OperationType.GreaterThanOrEqual);
-                                case OperationType.Like:
-                                case OperationType.NotLike:
-                                    if (dataContext.IsCaseSensitive)
-                                        return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} {(binaryField.OperationType == OperationType.Like ? "like" : "not like")} {rightSql}", OperationType.Like);
-                                    else
-                                        return new ExpressionInfo($"{leftSql} {(binaryField.OperationType == OperationType.Like ? "like" : "not like")} {rightSql}", OperationType.Like);
-                            }
-                        }
-                    }
-                }
-            }
-            else if (field.Type == FieldType.Unary && field.DataType.FullName == _BOOL_TYPE_NAME && ((UnaryField)field).OperationType == OperationType.Not)
-            {
-                UnaryField unaryField = (UnaryField)field;
-
-                if (unaryField.Operand.Type == FieldType.Method)
-                {
-                    MethodField operandMethodField = (MethodField)unaryField.Operand;
-
-                    if (operandMethodField.MethodInfo.ReflectedType.FullName == _STRING_TYPE_NAME && operandMethodField.Parameters != null && operandMethodField.Parameters.Count == 1 && operandMethodField.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && operandMethodField.Parameters[0] is BasicField parameter)
-                    {
-                        //对 string 静态的 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法取反时做特殊操作
-                        if ((operandMethodField.MethodInfo.Name == "IsNullOrEmpty" || operandMethodField.MethodInfo.Name == "IsNullOrWhiteSpace") && operandMethodField.ObjectField == null)
-                        {
-                            parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                            string parameterString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
-
-                            if (operandMethodField.MethodInfo.Name == "IsNullOrEmpty")
-                                return new ExpressionInfo($"{parameterString} is not null and {parameterString} != ''", OperationType.AndAlso);
-                            else
-                                return new ExpressionInfo($"{parameterString} is not null and trim({parameterString}) != ''", OperationType.AndAlso);
-                        }
-                        //对 string  类型的 StartsWith 或 Contains 方法取反时做特殊操作
-                        else if (operandMethodField.ObjectField != null && operandMethodField.ObjectField is BasicField basicField && (operandMethodField.MethodInfo.Name == "StartsWith" || operandMethodField.MethodInfo.Name == "Contains"))
-                        {
-                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
-                            parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                            string objectSql = basicField.Type == FieldType.Subquery || Helper.CheckIsPriority(basicField.ExpressionInfo.Type, OperationType.Subtract, true) ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-                            string searchString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
-                            string checkString = operandMethodField.MethodInfo.Name == "StartsWith" ? "!=" : "<";
-
-                            if (dataContext.IsCaseSensitive)
-                                return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
-                            else
-                                return new ExpressionInfo($"charIndex({searchString}, {objectSql}) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
-                        }
-                    }
-                }
-
-                unaryField.Operand.InitExpressionSQL(dataContext, dataSource, unaryField.Operand.Type != FieldType.Original && unaryField.Operand.Type != FieldType.Quote, addParameter);
-
-                string operandSql = unaryField.Operand.Type == FieldType.Subquery || (unaryField.Operand.Type != FieldType.Original && unaryField.Operand.Type != FieldType.Quote && Helper.CheckIsPriority(OperationType.Equal, unaryField.Operand.ExpressionInfo.Type, false)) ? $"({unaryField.Operand.ExpressionInfo.SQL})" : unaryField.Operand.ExpressionInfo.SQL;
-
-                return new ExpressionInfo($"{operandSql} = 0", OperationType.Equal);
-            }
-            else if (field.Type == FieldType.Method)
-            {
-                MethodField methodField = (MethodField)field;
-
-                //string 类型的 StartsWith 或 Contains 方法，不支持多参数的 StartsWith 或 Contains 方法
-                if (methodField.ObjectField != null && methodField.MethodInfo.ReflectedType.FullName == _STRING_TYPE_NAME && methodField.ObjectField is BasicField basicField && (methodField.MethodInfo.Name == "StartsWith" || methodField.MethodInfo.Name == "Contains") && methodField.Parameters != null && methodField.Parameters.Count == 1 && methodField.Parameters[0] is BasicField parameter)
-                {
-                    basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
-                    parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                    string objectSql = basicField.Type == FieldType.Subquery || Helper.CheckIsPriority(basicField.ExpressionInfo.Type, OperationType.Subtract, true) ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-                    string searchString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
-                    string checkString = methodField.MethodInfo.Name == "StartsWith" ? "=" : ">=";
-
-                    if (dataContext.IsCaseSensitive)
-                        return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) {checkString} 1", methodField.MethodInfo.Name == "StartsWith" ? OperationType.Equal : OperationType.GreaterThanOrEqual);
-                    else
-                        return new ExpressionInfo($"charIndex({searchString}, {objectSql}) {checkString} 1", methodField.MethodInfo.Name == "StartsWith" ? OperationType.Equal : OperationType.GreaterThanOrEqual);
-                }
-                //string 静态的 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法
-                else if (methodField.ObjectField == null && methodField.MethodInfo.ReflectedType.FullName == _STRING_TYPE_NAME && (methodField.MethodInfo.Name == "IsNullOrEmpty" || methodField.MethodInfo.Name == "IsNullOrWhiteSpace") && methodField.Parameters != null && methodField.Parameters.Count == 1 && methodField.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && methodField.Parameters[0] is BasicField)
-                {
-                    parameter = (BasicField)methodField.Parameters[0];
-
-                    parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                    string parameterString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
-
-                    if (methodField.MethodInfo.Name == "IsNullOrEmpty")
-                        return new ExpressionInfo($"{parameterString} is null or {parameterString} = ''", OperationType.OrElse);
-                    else
-                        return new ExpressionInfo($"{parameterString} is null or trim({parameterString}) = ''", OperationType.OrElse);
-                }
-            }
-
-            field.InitExpressionSQL(dataContext, dataSource, false, addParameter);
-
-            string fieldSql = field.Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Equal, field.ExpressionInfo.Type, false) ? $"({field.ExpressionInfo.SQL})" : field.ExpressionInfo.SQL;
-
-            return new ExpressionInfo($"{fieldSql} = 1", OperationType.Equal);
+            return new ExpressionInfo($"{field.GetBasicExpression(parameterContext).SQL} = 1", OperationType.Equal);
         }
 
         /// <summary>
-        /// 初始化指定成员调用字段的 Sql 表示信息。
+        /// 创建成员调用字段的基础表示 Sql 信息。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitMemberField(IDataContext dataContext, DataSource.DataSource dataSource, MemberField field, Func<object, string> addParameter)
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的成员调用字段。</param>
+        /// <returns>该成员调用字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateMemberBasicSql(IParameterContext parameterContext, MemberField field)
         {
             if (field.ObjectField != null && field.ObjectField is BasicField basicField)
             {
                 //若调用实例为 string 类型
-                if (field.ObjectField.DataType.FullName == _STRING_TYPE_NAME)
+                if (field.ObjectField.DataType == _StringType)
                 {
                     if (field.MemberInfo.Name == "Length" && field.MemberInfo.MemberType == MemberTypes.Property)
                     {
-                        basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                        var obj = basicField.GetBasicExpression(parameterContext);
 
-                        string objectSql = field.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                        string objectSql = obj.Type == OperationType.Subquery ? $"({obj.SQL})" : obj.SQL;
 
                         return new ExpressionInfo($"len({objectSql})", OperationType.Call);
                     }
                 }
                 //若调用实例为 DateTime 类型且成员类型为属性
-                else if (field.ObjectField.DataType.FullName == _DATETIME_TYPE_NAME && field.MemberInfo.MemberType == MemberTypes.Property)
+                else if (field.ObjectField.DataType == _DateTimeType && field.MemberInfo.MemberType == MemberTypes.Property)
                 {
                     if (field.MemberInfo.Name == "Year"
                         || field.MemberInfo.Name == "Month"
@@ -755,58 +370,66 @@ namespace GfdbFramework.SqlServer
                         || field.MemberInfo.Name == "Second"
                         || field.MemberInfo.Name == "Millisecond")
                     {
-                        basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                        var obj = basicField.GetBasicExpression(parameterContext);
 
-                        string dateTimeSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                        string objectSql = obj.Type == OperationType.Subquery ? $"({obj.SQL})" : obj.SQL;
 
-                        return new ExpressionInfo($"dateName({field.MemberInfo.Name.ToLower()}, {dateTimeSql})", OperationType.Call);
+                        return new ExpressionInfo($"dateName({field.MemberInfo.Name.ToLower()}, {objectSql})", OperationType.Call);
                     }
                     else if (field.MemberInfo.Name == "Date")
                     {
-                        basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                        var obj = basicField.GetBasicExpression(parameterContext);
 
-                        string dateTimeSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                        string objectSql = obj.Type == OperationType.Subquery ? $"({obj.SQL})" : obj.SQL;
 
-                        return new ExpressionInfo($"convert(date, {dateTimeSql})", OperationType.Call);
+                        return new ExpressionInfo($"convert(date, {objectSql})", OperationType.Call);
                     }
                 }
             }
 
-            throw new Exception($"未能将调用 {field.MemberInfo.DeclaringType.FullName} 类中的 {field.MemberInfo.Name} 成员转换成 Sql 表示信息");
+            throw new Exception($"未能创建指定成员调用字段对应的基础表示信息，类名：{field.MemberInfo.DeclaringType.FullName}，成员名：{field.MemberInfo.Name}");
         }
 
         /// <summary>
-        /// 初始化指定方法调用字段的 Sql 表示信息。
+        /// 创建成员调用字段的布尔表示 Sql 信息。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitMethodField(IDataContext dataContext, DataSource.DataSource dataSource, MethodField field, Func<object, string> addParameter)
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的成员调用字段。</param>
+        /// <returns>该成员调用字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateMemberBoolSql(IParameterContext parameterContext, MemberField field)
         {
+            throw new Exception($"未能创建指定成员调用字段对应布尔形态的表示信息，类名：{field.MemberInfo.DeclaringType.FullName}，成员名：{field.MemberInfo.Name}");
+        }
+
+        /// <summary>
+        /// 创建方法调用字段的基础表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的方法调用字段。</param>
+        /// <returns>该方法调用字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateMethodBasicSql(IParameterContext parameterContext, MethodField field)
+        {
+            //实例方法
             if (field.ObjectField != null)
             {
                 //调用实例字段是基础数据字段
                 if (field.ObjectField is BasicField basicField)
                 {
                     //若调用实例为 string 类型
-                    if (field.ObjectField.DataType.FullName == _STRING_TYPE_NAME)
+                    if (field.ObjectField.DataType == _StringType)
                     {
                         //IndexOf 方法
                         if (field.MethodInfo.Name == "IndexOf" && field.Parameters != null && (field.Parameters.Count == 1 || field.Parameters.Count == 2) && field.Parameters[0] is BasicField parameter)
                         {
-                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
-                            parameter.InitExpressionSQL(dataContext, dataSource, addParameter);
+                            var basic = basicField.GetBasicExpression(parameterContext);
+                            var param = parameter.GetBasicExpression(parameterContext);
+                            ExpressionInfo index = field.Parameters.Count == 1 ? null : ((BasicField)field.Parameters[1]).GetBasicExpression(parameterContext);
 
-                            if (field.Parameters.Count == 2)
-                                ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                            string objectSql = basic.Type == OperationType.Subquery ? $"({basic.SQL})" : basic.SQL;
+                            string searchString = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
+                            string startIndex = index != null ? Helper.CheckIsPriority(OperationType.Add, index.Type, false) ? $"({index.SQL})" : index.SQL : null;
 
-                            string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-                            string searchString = parameter.Type == FieldType.Subquery ? $"({parameter.ExpressionInfo.SQL})" : parameter.ExpressionInfo.SQL;
-                            string startIndex = field.Parameters.Count == 1 ? null : field.Parameters[1].Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Add, ((BasicField)field.Parameters[1]).ExpressionInfo.Type, false) ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
-
-                            if (dataContext.IsCaseSensitive)
+                            if (field.DataContext.IsCaseSensitive)
                                 objectSql = $"{objectSql} {_CASE_SENSITIVE_MARK}";
 
                             //Sql Server 中的 charIndex 是从 1 开始，结果得手动减去 1，startIndex 得手动加上 1
@@ -818,71 +441,62 @@ namespace GfdbFramework.SqlServer
                         //Substring 方法
                         else if (field.MethodInfo.Name == "Substring" && field.Parameters != null && (field.Parameters.Count == 1 || field.Parameters.Count == 2))
                         {
-                            BasicField startField = (BasicField)field.Parameters[0];
+                            var basic = basicField.GetBasicExpression(parameterContext);
+                            var start = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
+                            ExpressionInfo length = field.Parameters.Count == 1 ? null : ((BasicField)field.Parameters[1]).GetBasicExpression(parameterContext);
 
-                            startField.InitExpressionSQL(dataContext, dataSource, addParameter);
-                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                            string parameterStartSql = startField.Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Add, startField.ExpressionInfo.Type, false) ? $"({startField.ExpressionInfo.SQL})" : startField.ExpressionInfo.SQL;
-                            string parameterStringSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                            string startSql = Helper.CheckIsPriority(OperationType.Add, start.Type, false) ? $"({start.SQL})" : start.SQL;
+                            string stringSql = basic.Type == OperationType.Subquery ? $"({basic.SQL})" : basic.SQL;
                             string lengthSql;
 
                             if (field.Parameters.Count == 1)
                             {
-                                string lengthParameter = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-                                string startSql = startField.Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Subtract, startField.ExpressionInfo.Type, true) ? $"({startField.ExpressionInfo.SQL})" : startField.ExpressionInfo.SQL;
+                                lengthSql = basic.Type == OperationType.Subquery ? $"({basic.SQL})" : basic.SQL;
 
-                                lengthSql = $"len({lengthParameter}) - {startSql}";
+                                lengthSql = $"len({lengthSql}) - {startSql}";
                             }
                             else
                             {
-                                BasicField lengthField = (BasicField)field.Parameters[1];
-
-                                lengthField.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                                lengthSql = lengthField.Type == FieldType.Subquery ? $"({lengthField.ExpressionInfo.SQL})" : lengthField.ExpressionInfo.SQL;
+                                lengthSql = length.Type == OperationType.Subquery ? $"({length.SQL})" : length.SQL;
                             }
 
-                            return new ExpressionInfo($"substring({parameterStringSql}, {parameterStartSql} + 1, {lengthSql})", OperationType.Call);
+                            return new ExpressionInfo($"substring({stringSql}, {startSql} + 1, {lengthSql})", OperationType.Call);
                         }
-                        //Trim、ToUpper 或 ToLower 方法
-                        else if ((field.MethodInfo.Name == "Trim" || field.MethodInfo.Name == "ToUpper" || field.MethodInfo.Name == "ToLower") && (field.Parameters == null || field.Parameters.Count < 1))
+                        //无参的 Trim、TrimStart、TrimEnd、ToUpper 或 ToLower 方法
+                        else if ((field.MethodInfo.Name == "Trim" || field.MethodInfo.Name == "TrimStart" || field.MethodInfo.Name == "TrimEnd" || field.MethodInfo.Name == "ToUpper" || field.MethodInfo.Name == "ToLower") && (field.Parameters == null || field.Parameters.Count < 1))
                         {
-                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                            var basic = basicField.GetBasicExpression(parameterContext);
 
-                            string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                            string objectSql = basic.Type == OperationType.Subquery ? $"({basic.SQL})" : basic.SQL;
 
-                            string methodName = field.MethodInfo.Name == "Trim" ? "trim" : field.MethodInfo.Name == "ToLower" ? "lower" : "upper";
+                            string methodName = field.MethodInfo.Name == "Trim" ? "trim" : field.MethodInfo.Name == "TrimStart" ? "ltrim" : field.MethodInfo.Name == "TrimEnd" ? "rtrim" : field.MethodInfo.Name == "ToLower" ? "lower" : "upper";
 
                             return new ExpressionInfo($"{methodName}({objectSql})", OperationType.Call);
                         }
-                        //StartsWith 或 Contains 方法，不支持多参数的 StartsWith 或 Contains 方法
-                        else if ((field.MethodInfo.Name == "StartsWith" || field.MethodInfo.Name == "Contains") && field.Parameters != null && field.Parameters.Count == 1)
+                        //StartsWith、EndsWith 或 Contains 方法，不支持带参数的 StartsWith、EndsWith 方法
+                        else if ((field.MethodInfo.Name == "StartsWith" || field.MethodInfo.Name == "EndsWith" || field.MethodInfo.Name == "Contains") && field.Parameters != null && field.Parameters.Count == 1)
                         {
-                            if (dataContext.BuildNumber >= 684)
-                                return new ExpressionInfo($"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))", OperationType.Call);
-                            else
-                                return new ExpressionInfo($"case when {field.BooleanInfo.SQL} then convert(bit, 1) else convert(bit, 0) end", OperationType.Default);
+                            return BoolToBasicExpression(field.DataContext, field.GetBoolExpression(parameterContext));
                         }
                         //Insert 或 Replace 方法
                         else if ((field.MethodInfo.Name == "Insert" || field.MethodInfo.Name == "Replace") && field.Parameters != null && field.Parameters.Count == 2 && field.Parameters[0] is BasicField && field.Parameters[1] is BasicField)
                         {
-                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
-                            ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
-                            ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                            var basic = basicField.GetBasicExpression(parameterContext);
+                            var param1 = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
+                            var param2 = ((BasicField)field.Parameters[1]).GetBasicExpression(parameterContext);
 
-                            string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
-                            string parameter1 = field.Parameters[0].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
-                            string parameter2 = field.Parameters[1].Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+                            string objectSql = basic.Type == OperationType.Subquery ? $"({basic.SQL})" : basic.SQL;
+                            string param1Sql = param1.Type == OperationType.Subquery ? $"({param1.SQL})" : param1.SQL;
+                            string param2Sql = param2.Type == OperationType.Subquery ? $"({param2.SQL})" : param2.SQL;
 
                             if (field.MethodInfo.Name == "Replace")
-                                return new ExpressionInfo($"replace({objectSql}, {parameter1}, {parameter2})", OperationType.Call);
+                                return new ExpressionInfo($"replace({objectSql}, {param1Sql}, {param2Sql})", OperationType.Call);
                             else
-                                return new ExpressionInfo($"subString({objectSql}, 1, {parameter1}) + {parameter2} + subString({objectSql}, {(field.Parameters[0].Type != FieldType.Subquery && Helper.CheckIsPriority(OperationType.Add, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, false) ? $"({parameter1})" : parameter1)} + 1, len({objectSql}) - {(field.Parameters[0].Type != FieldType.Subquery && Helper.CheckIsPriority(OperationType.Subtract, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, true) ? $"({parameter1})" : parameter1)})", OperationType.Add);
+                                return new ExpressionInfo($"subString({objectSql}, 1, {param1Sql}) + {param2Sql} + subString({objectSql}, {(Helper.CheckIsPriority(OperationType.Add, param1.Type, false) ? $"({param1Sql})" : param1Sql)} + 1, len({objectSql}) - {(Helper.CheckIsPriority(OperationType.Subtract, param1.Type, true) ? $"({param1Sql})" : param1Sql)})", OperationType.Add);
                         }
                     }
                     //若调用实例为 DateTime 类型
-                    else if (field.ObjectField.DataType.FullName == _DATETIME_TYPE_NAME)
+                    else if (field.ObjectField.DataType == _DateTimeType)
                     {
                         //ToString 方法
                         if (field.MethodInfo.Name == "ToString")
@@ -893,7 +507,7 @@ namespace GfdbFramework.SqlServer
                             {
                                 if (field.Parameters.Count == 1)
                                 {
-                                    if (field.Parameters[0].DataType.FullName != _STRING_TYPE_NAME)
+                                    if (field.Parameters[0].DataType != _StringType)
                                         throw new Exception("Sql Server 日期格式化只支持固定的字符串格式参数");
                                     else if (field.Parameters[0].Type != FieldType.Constant)
                                         throw new Exception("Sql Server 日期不支持动态格式化，要想格式化日期，格式参数只能是运行时常量字符串");
@@ -906,9 +520,9 @@ namespace GfdbFramework.SqlServer
                                 }
                             }
 
-                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                            var basic = basicField.GetBasicExpression(parameterContext);
 
-                            string dateTimeSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                            string dateTimeSql = basic.Type == OperationType.Subquery ? $"({basic.SQL})" : basic.SQL;
 
                             switch (format)
                             {
@@ -970,12 +584,12 @@ namespace GfdbFramework.SqlServer
                             }
                         }
                     }
-                    //ToString 方法
+                    //无参 ToString 方法
                     else if (field.MethodInfo.Name == "ToString" && (field.Parameters == null || field.Parameters.Count < 1))
                     {
-                        basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                        var basic = basicField.GetBasicExpression(parameterContext);
 
-                        string objectSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                        string objectSql = basic.Type == OperationType.Subquery ? $"({basic.SQL})" : basic.SQL;
 
                         return new ExpressionInfo($"convert(varchar, {objectSql})", OperationType.Call);
                     }
@@ -987,9 +601,9 @@ namespace GfdbFramework.SqlServer
                 //各种类型转换函数，如：ToInt32、ToDateTime 等
                 if (field.MethodInfo.Name.StartsWith("To") && field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0] is BasicField basicField)
                 {
-                    basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var basic = basicField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = basicField.Type == FieldType.Subquery ? $"({basicField.ExpressionInfo.SQL})" : basicField.ExpressionInfo.SQL;
+                    string parameterSql = basic.Type == OperationType.Subquery ? $"({basic.SQL})" : basic.SQL;
 
                     switch (field.MethodInfo.Name)
                     {
@@ -998,23 +612,24 @@ namespace GfdbFramework.SqlServer
                         case "ToInt64":
                         case "ToBoolean":
                         case "ToByte":
+                        case "ToSByte":
                         case "ToSingle":
                         case "ToDouble":
                         case "ToDecimal":
                         case "ToDateTime":
-                            return new ExpressionInfo($"convert({dataContext.NetTypeToDBType(field.DataType)}, {parameterSql})", OperationType.Call);
+                            return new ExpressionInfo($"convert({field.DataContext.NetTypeToDBType(field.DataType)}, {parameterSql})", OperationType.Call);
                     }
                 }
             }
             //如果是 Math 数学函数类
-            else if (field.MethodInfo.ReflectedType.FullName == _MATH_TYPE_NAME)
+            else if (field.MethodInfo.ReflectedType == _MathType)
             {
                 //Math.Round 函数
-                if (field.MethodInfo.Name == "Round" && field.Parameters != null && (field.Parameters.Count == 1 || (field.Parameters.Count == 2 && field.Parameters[1].DataType.FullName == _INT_TYPE_NAME)))
+                if (field.MethodInfo.Name == "Round" && field.Parameters != null && (field.Parameters.Count == 1 || (field.Parameters.Count == 2 && field.Parameters[1].DataType == _IntType)))
                 {
-                    ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var numeric = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
 
-                    string numericSql = ((BasicField)field.Parameters[0]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
+                    string numericSql = numeric.Type == OperationType.Subquery ? $"({numeric.SQL})" : numeric.SQL;
 
                     if (field.Parameters.Count == 1)
                     {
@@ -1022,36 +637,36 @@ namespace GfdbFramework.SqlServer
                     }
                     else
                     {
-                        ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                        var length = ((BasicField)field.Parameters[1]).GetBasicExpression(parameterContext);
 
-                        string lengthSql = ((BasicField)field.Parameters[1]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+                        string lengthSql = length.Type == OperationType.Subquery ? $"({length.SQL})" : length.SQL;
 
                         return new ExpressionInfo($"round({numericSql}, {lengthSql})", OperationType.Call);
                     }
                 }
-                //Math.Floor 、 Math.Ceiling 或 Math.Abs 函数
+                //Math.Floor、Math.Ceiling 或 Math.Abs 函数
                 else if ((field.MethodInfo.Name == "Floor" || field.MethodInfo.Name == "Ceiling" || field.MethodInfo.Name == "Abs") && field.Parameters != null && field.Parameters.Count == 1)
                 {
-                    ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var numeric = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
 
-                    string numericSql = ((BasicField)field.Parameters[0]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
+                    string numericSql = numeric.Type == OperationType.Subquery ? $"({numeric.SQL})" : numeric.SQL;
 
                     return new ExpressionInfo($"{field.MethodInfo.Name.ToLower()}({numericSql})", OperationType.Call);
                 }
                 //Math.Pow 函数
                 else if (field.MethodInfo.Name == "Pow" && field.Parameters != null && field.Parameters.Count == 2)
                 {
-                    ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
-                    ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var power = ((BasicField)field.Parameters[1]).GetBasicExpression(parameterContext);
+                    var numeric = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
 
-                    string numericSql = ((BasicField)field.Parameters[0]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[0]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
-                    string powerSql = ((BasicField)field.Parameters[1]).Type == FieldType.Subquery ? $"({((BasicField)field.Parameters[1]).ExpressionInfo.SQL})" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+                    string numericSql = numeric.Type == OperationType.Subquery ? $"({numeric.SQL})" : numeric.SQL;
+                    string powerSql = power.Type == OperationType.Subquery ? $"({power.SQL})" : power.SQL;
 
                     return new ExpressionInfo($"power({numericSql}, {powerSql})", OperationType.Call);
                 }
             }
             //如果是 DBFun 类的函数
-            else if (field.MethodInfo.ReflectedType.FullName == _DBFunType.FullName)
+            else if (field.MethodInfo.ReflectedType == _DBFunType)
             {
                 //DBFun.Count 方法
                 if (field.MethodInfo.Name == _DBFunCountMethodName)
@@ -1064,16 +679,20 @@ namespace GfdbFramework.SqlServer
                     {
                         if (field.Parameters[0] is BasicField basicField)
                         {
-                            basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                            var param = basicField.GetBasicExpression(parameterContext);
 
-                            return new ExpressionInfo($"count({basicField.ExpressionInfo.SQL})", OperationType.Call);
+                            var paramSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
+
+                            return new ExpressionInfo($"count({paramSql})", OperationType.Call);
                         }
                     }
                 }
                 //其他聚合方法（Max、Min、STDev、STDevP、Sum、Avg、Var、VarP）
                 else if (field.Parameters != null && field.Parameters.Count == 1 && (field.MethodInfo.Name == _DBFunMaxMethodName || field.MethodInfo.Name == _DBFunSTDevMethodName || field.MethodInfo.Name == _DBFunSTDevPMethodName || field.MethodInfo.Name == _DBFunMinMethodName || field.MethodInfo.Name == _DBFunSumMethodName || field.MethodInfo.Name == _DBFunAvgMethodName || field.MethodInfo.Name == _DBFunVarMethodName || field.MethodInfo.Name == _DBFunVarPMethodName) && field.Parameters[0] is BasicField basicField)
                 {
-                    basicField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = basicField.GetBasicExpression(parameterContext);
+
+                    var paramSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     string methodName;
 
@@ -1096,7 +715,7 @@ namespace GfdbFramework.SqlServer
                     else
                         throw new Exception($"Sql Server 不支持 DBFun.{field.MethodInfo.Name} 函数");
 
-                    return new ExpressionInfo($"{methodName}({basicField.ExpressionInfo.SQL})", OperationType.Call);
+                    return new ExpressionInfo($"{methodName}({paramSql})", OperationType.Call);
                 }
                 //DBFun.NowTime 函数
                 else if ((field.Parameters == null || field.Parameters.Count < 1) && field.MethodInfo.Name == _DBFunNowTimeMethodName)
@@ -1117,11 +736,12 @@ namespace GfdbFramework.SqlServer
                     }
                     else
                     {
-                        ((BasicField)field.Parameters[0]).InitExpressionSQL(dataContext, dataSource, addParameter);
-                        ((BasicField)field.Parameters[1]).InitExpressionSQL(dataContext, dataSource, addParameter);
+                        var min = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
+                        var max = ((BasicField)field.Parameters[1]).GetBasicExpression(parameterContext);
 
-                        string minSql = field.Parameters[0].Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Add, ((BasicField)field.Parameters[0]).ExpressionInfo.Type, false) ? $"{((BasicField)field.Parameters[0]).ExpressionInfo.SQL}" : ((BasicField)field.Parameters[0]).ExpressionInfo.SQL;
-                        string maxSql = field.Parameters[1].Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Multiply, ((BasicField)field.Parameters[1]).ExpressionInfo.Type, true) ? $"{((BasicField)field.Parameters[1]).ExpressionInfo.SQL}" : ((BasicField)field.Parameters[1]).ExpressionInfo.SQL;
+                        string minSql = Helper.CheckIsPriority(OperationType.Add, min.Type, false) ? $"({min.SQL})" : min.SQL;
+                        string maxSql = Helper.CheckIsPriority(OperationType.Subtract, max.Type, false) ? $"({max.SQL})" : max.SQL;
+                        maxSql = Helper.CheckIsPriority(OperationType.Subtract, min.Type, true) ? $"({maxSql} - ({min.SQL}))" : $"({maxSql} - {min.SQL})";
 
                         return new ExpressionInfo($"{minSql} + convert(int, rand() * {maxSql})", OperationType.Add);
                     }
@@ -1132,7 +752,7 @@ namespace GfdbFramework.SqlServer
                     return new ExpressionInfo("convert(bigint, (rand() * -9223372036854775808) + (rand() * 9223372036854775807))", OperationType.Call);
                 }
                 //DBFun 的各种日期差值计算函数
-                else if (field.Parameters != null && field.MethodInfo.ReturnType.FullName == _INT_TYPE_NAME && field.Parameters.Count == 2 && field.Parameters[0].DataType.FullName == _DATETIME_TYPE_NAME && field.Parameters[1].DataType.FullName == _DATETIME_TYPE_NAME &&
+                else if (field.Parameters != null && field.MethodInfo.ReturnType == _IntType && field.Parameters.Count == 2 && field.Parameters[0].DataType == _DateTimeType && field.Parameters[1].DataType == _DateTimeType &&
                     (field.MethodInfo.Name == _DBFunDiffYearMethodName
                     || field.MethodInfo.Name == _DBFunDiffMonthMethodName
                     || field.MethodInfo.Name == _DBFunDiffDayMethodName
@@ -1141,14 +761,11 @@ namespace GfdbFramework.SqlServer
                     || field.MethodInfo.Name == _DBFunDiffSecondMethodName
                     || field.MethodInfo.Name == _DBFunDiffMillisecondMethodName))
                 {
-                    BasicField objectField = (BasicField)field.Parameters[0];
-                    BasicField compareField = (BasicField)field.Parameters[1];
+                    var obj = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
+                    var compare = ((BasicField)field.Parameters[1]).GetBasicExpression(parameterContext);
 
-                    objectField.InitExpressionSQL(dataContext, dataSource, addParameter);
-                    compareField.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                    string objectSql = objectField.Type == FieldType.Subquery ? $"({objectField.ExpressionInfo.SQL})" : objectField.ExpressionInfo.SQL;
-                    string compareSql = compareField.Type == FieldType.Subquery ? $"({compareField.ExpressionInfo.SQL})" : compareField.ExpressionInfo.SQL;
+                    string objectSql = obj.Type == OperationType.Subquery ? $"({obj.SQL})" : obj.SQL;
+                    string compareSql = compare.Type == OperationType.Subquery ? $"({compare.SQL})" : compare.SQL;
 
                     string type;
 
@@ -1170,7 +787,7 @@ namespace GfdbFramework.SqlServer
                     return new ExpressionInfo($"dateDiff({type}, {objectSql}, {compareSql})", OperationType.Call);
                 }
                 //DNFun 的各种日期添加函数
-                else if (field.Parameters != null && field.MethodInfo.ReturnType.FullName == _DATETIME_TYPE_NAME && field.Parameters.Count == 2 && field.Parameters[0].DataType.FullName == _DATETIME_TYPE_NAME && field.Parameters[1].DataType.FullName == _INT_TYPE_NAME &&
+                else if (field.Parameters != null && field.MethodInfo.ReturnType == _DateTimeType && field.Parameters.Count == 2 && field.Parameters[0].DataType == _DateTimeType && field.Parameters[1].DataType == _IntType &&
                     (field.MethodInfo.Name == _DBFunAddYearMethodName
                     || field.MethodInfo.Name == _DBFunAddMonthMethodName
                     || field.MethodInfo.Name == _DBFunAddDayMethodName
@@ -1179,14 +796,11 @@ namespace GfdbFramework.SqlServer
                     || field.MethodInfo.Name == _DBFunAddSecondMethodName
                     || field.MethodInfo.Name == _DBFunAddMillisecondMethodName))
                 {
-                    BasicField objectField = (BasicField)field.Parameters[0];
-                    BasicField valueField = (BasicField)field.Parameters[1];
+                    var obj = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
+                    var value = ((BasicField)field.Parameters[1]).GetBasicExpression(parameterContext);
 
-                    objectField.InitExpressionSQL(dataContext, dataSource, addParameter);
-                    valueField.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-                    string objectSql = objectField.Type == FieldType.Subquery ? $"({objectField.ExpressionInfo.SQL})" : objectField.ExpressionInfo.SQL;
-                    string valueSql = valueField.Type == FieldType.Subquery ? $"({valueField.ExpressionInfo.SQL})" : valueField.ExpressionInfo.SQL;
+                    string objectSql = obj.Type == OperationType.Subquery ? $"({obj.SQL})" : obj.SQL;
+                    string valueSql = value.Type == OperationType.Subquery ? $"({value.SQL})" : value.SQL;
 
                     string type;
 
@@ -1209,203 +823,233 @@ namespace GfdbFramework.SqlServer
                 }
             }
             //各种 Parse 方法
-            else if (field.MethodInfo.Name == "Parse" && field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && field.Parameters[0] is BasicField parameterField)
+            else if (field.MethodInfo.Name == "Parse" && field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType == _StringType && field.Parameters[0] is BasicField parameterField)
             {
                 //DateTime.Parse 方法
-                if (field.DataType.FullName == _DATETIME_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _DATETIME_TYPE_NAME)
+                if (field.DataType == _DateTimeType && field.MethodInfo.ReflectedType == _DateTimeType)
                 {
-                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = parameterField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     return new ExpressionInfo($"convert(dateTime,{parameterSql})", OperationType.Call);
                 }
                 //int.Parse 方法
-                else if (field.DataType.FullName == _INT_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _INT_TYPE_NAME)
+                else if (field.DataType == _IntType && field.MethodInfo.ReflectedType == _IntType)
                 {
-                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = parameterField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     return new ExpressionInfo($"convert(int,{parameterSql})", OperationType.Call);
                 }
                 //double.Parse 方法
-                else if (field.DataType.FullName == _DOUBLE_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _DOUBLE_TYPE_NAME)
+                else if (field.DataType == _DoubleType && field.MethodInfo.ReflectedType == _DoubleType)
                 {
-                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = parameterField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     return new ExpressionInfo($"convert(float,{parameterSql})", OperationType.Call);
                 }
                 //long.Parse 方法
-                else if (field.DataType.FullName == _LONG_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _LONG_TYPE_NAME)
+                else if (field.DataType == _LongType && field.MethodInfo.ReflectedType == _LongType)
                 {
-                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = parameterField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     return new ExpressionInfo($"convert(bigint,{parameterSql})", OperationType.Call);
                 }
                 //short.Parse 方法
-                else if (field.DataType.FullName == _SHORT_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _SHORT_TYPE_NAME)
+                else if (field.DataType == _ShortType && field.MethodInfo.ReflectedType == _ShortType)
                 {
-                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = parameterField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     return new ExpressionInfo($"convert(smallint,{parameterSql})", OperationType.Call);
                 }
                 //byte.Parse 方法
-                else if (field.DataType.FullName == _BYTE_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _BYTE_TYPE_NAME)
+                else if (field.DataType == _ByteType && field.MethodInfo.ReflectedType == _ByteType)
                 {
-                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = parameterField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     return new ExpressionInfo($"convert(tinyint,{parameterSql})", OperationType.Call);
                 }
                 //decimal.Parse 方法
-                else if (field.DataType.FullName == _DECIMAL_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _DECIMAL_TYPE_NAME)
+                else if (field.DataType == _DecimalType && field.MethodInfo.ReflectedType == _DecimalType)
                 {
-                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = parameterField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     return new ExpressionInfo($"convert(decimal,{parameterSql})", OperationType.Call);
                 }
-                //Guid.Parse 方法
-                else if (field.DataType.FullName == _GUID_TYPE_NAME && field.MethodInfo.ReflectedType.FullName == _GUID_TYPE_NAME)
+                //bool.Parse 方法
+                else if (field.DataType == _BoolType && field.MethodInfo.ReflectedType == _BoolType)
                 {
-                    parameterField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var param = parameterField.GetBasicExpression(parameterContext);
 
-                    string parameterSql = parameterField.Type == FieldType.Subquery ? $"({parameterField.ExpressionInfo.SQL})" : parameterField.ExpressionInfo.SQL;
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
+
+                    return new ExpressionInfo($"convert(bit,{parameterSql})", OperationType.Call);
+                }
+                //Guid.Parse 方法
+                else if (field.DataType == _GuidType && field.MethodInfo.ReflectedType == _GuidType)
+                {
+                    var param = parameterField.GetBasicExpression(parameterContext);
+
+                    string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
 
                     return new ExpressionInfo($"convert(uniqueidentifier,{parameterSql})", OperationType.Call);
                 }
             }
             //字符串静态 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法
-            else if (field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType.FullName == _STRING_TYPE_NAME && field.Parameters[0] is BasicField basicField && (field.MethodInfo.Name == "IsNullOrEmpty" || field.MethodInfo.Name == "IsNullOrWhiteSpace") && field.MethodInfo.ReflectedType.FullName == _STRING_TYPE_NAME)
+            else if (field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType == _StringType && field.Parameters[0] is BasicField basicField && (field.MethodInfo.Name == "IsNullOrEmpty" || field.MethodInfo.Name == "IsNullOrWhiteSpace") && field.MethodInfo.ReflectedType == _StringType)
             {
-                if (dataContext.BuildNumber >= 684)
-                    return new ExpressionInfo($"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))", OperationType.Call);
-                else
-                    return new ExpressionInfo($"case when {field.BooleanInfo.SQL} then convert(bit, 1) else convert(bit, 0) end", OperationType.Default);
+                return BoolToBasicExpression(field.DataContext, field.GetBoolExpression(parameterContext));
             }
-            throw new Exception($"未能将调用 {field.MethodInfo.DeclaringType.FullName} 类中的 {field.MethodInfo.Name} 方法字段转换成 Sql 表示信息");
+
+            throw new Exception($"未能创建指定方法调用字段对应的基础表示信息，类名：{field.MethodInfo.DeclaringType.FullName}，方法名：{field.MethodInfo.Name}");
         }
 
         /// <summary>
-        /// 初始化指定原始数据字段的 Sql 表示信息。
+        /// 创建方法调用字段的布尔表示 Sql 信息。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitOriginalField(IDataContext dataContext, DataSource.DataSource dataSource, OriginalField field, Func<object, string> addParameter)
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的方法调用字段。</param>
+        /// <returns>该方法调用字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateMethodBoolSql(IParameterContext parameterContext, MethodField field)
         {
-            return new ExpressionInfo($"{((BasicDataSource)dataSource).Alias}.{field.FieldName}", OperationType.Default);
-        }
-
-        /// <summary>
-        /// 初始化指定引用字段的 Sql 表示信息。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitQuoteField(IDataContext dataContext, DataSource.DataSource dataSource, QuoteField field, Func<object, string> addParameter)
-        {
-            return new ExpressionInfo($"{field.UsingDataSource.Alias}.{field.UsingFieldName}", OperationType.Default);
-        }
-
-        /// <summary>
-        /// 初始化指定子查询字段的 Sql 表示信息。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitSubqueryField(IDataContext dataContext, DataSource.DataSource dataSource, SubqueryField field, Func<object, string> addParameter)
-        {
-            return new ExpressionInfo(GenerateQuerySql(dataContext, field.QueryDataSource, field.QueryField, false, addParameter), OperationType.Default);
-        }
-
-        /// <summary>
-        /// 初始化指定一元操作字段的 Sql 表示信息。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitUnaryField(IDataContext dataContext, DataSource.DataSource dataSource, UnaryField field, Func<object, string> addParameter)
-        {
-            field.Operand.InitExpressionSQL(dataContext, dataSource, addParameter);
-
-            if (field.OperationType == OperationType.Not)
+            //StartsWith、EndsWith 或 Contains 方法，不支持带参数的 StartsWith、EndsWith 方法
+            if (field.ObjectField != null && field.MethodInfo.ReflectedType == _StringType && field.ObjectField is BasicField basicField && (field.MethodInfo.Name == "StartsWith" || field.MethodInfo.Name == "EndsWith" || field.MethodInfo.Name == "Contains") && field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0] is BasicField parameter)
             {
-                if (field.DataType.FullName == _BOOL_TYPE_NAME)
+                ExpressionInfo basic = basicField.GetBasicExpression(parameterContext);
+                ExpressionInfo param = parameter.GetBasicExpression(parameterContext);
+
+                string objectSql = basic.Type == OperationType.Subquery ? $"({basic})" : basic.SQL;
+                string searchString = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
+
+                if (field.MethodInfo.Name == "EndsWith")
                 {
-                    string sql;
-                    OperationType useType;
-
-                    //大于等于Sql Server 2012时使用 iif 函数
-                    if (dataContext.BuildNumber >= 684)
-                    {
-                        sql = $"iif({field.BooleanInfo.SQL}, convert(bit, 1), convert(bit, 0))";
-
-                        useType = OperationType.Call;
-                    }
+                    if (field.DataContext.IsCaseSensitive)
+                        return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) == len({objectSql}) - len({searchString}) + 1", OperationType.Equal);
                     else
-                    {
-                        sql = $"case when {field.BooleanInfo.SQL} then convert(bit, 1) else convert(bit, 0) end";
-
-                        useType = OperationType.Default;
-                    }
-
-                    return new ExpressionInfo(sql, useType);
+                        return new ExpressionInfo($"charIndex({searchString}, {objectSql}) == len({objectSql}) - len({searchString}) + 1", OperationType.Equal);
                 }
                 else
                 {
-                    string operandSql = field.Operand.Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Not, field.Operand.ExpressionInfo.Type, true) ? $"({field.Operand.ExpressionInfo.SQL})" : field.Operand.ExpressionInfo.SQL;
+                    string checkString = field.MethodInfo.Name == "StartsWith" ? "=" : ">=";
 
-                    return new ExpressionInfo($"~{operandSql}", OperationType.Not);
+                    if (field.DataContext.IsCaseSensitive)
+                        return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) {checkString} 1", field.MethodInfo.Name == "StartsWith" ? OperationType.Equal : OperationType.GreaterThanOrEqual);
+                    else
+                        return new ExpressionInfo($"charIndex({searchString}, {objectSql}) {checkString} 1", field.MethodInfo.Name == "StartsWith" ? OperationType.Equal : OperationType.GreaterThanOrEqual);
                 }
             }
-            else if (field.OperationType == OperationType.Negate)
+            //string 静态的 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法
+            else if (field.ObjectField == null && field.MethodInfo.ReflectedType == _StringType && (field.MethodInfo.Name == "IsNullOrEmpty" || field.MethodInfo.Name == "IsNullOrWhiteSpace") && field.Parameters != null && field.Parameters.Count == 1 && field.Parameters[0].DataType == _StringType && field.Parameters[0] is BasicField)
             {
-                string operandSql = field.Operand.Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Negate, field.Operand.ExpressionInfo.Type, true) ? $"({field.Operand.ExpressionInfo.SQL})" : field.Operand.ExpressionInfo.SQL;
+                var param = ((BasicField)field.Parameters[0]).GetBasicExpression(parameterContext);
 
-                return new ExpressionInfo($"-{operandSql}", OperationType.Negate);
+                string parameterSql = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
+
+                if (field.MethodInfo.Name == "IsNullOrEmpty")
+                    return new ExpressionInfo($"{parameterSql} is null or {parameterSql} = ''", OperationType.OrElse);
+                else
+                    return new ExpressionInfo($"{parameterSql} is null or trim({parameterSql}) = ''", OperationType.OrElse);
             }
-            else if (field.OperationType == OperationType.Convert)
-            {
-                string operandSql = field.Operand.Type == FieldType.Subquery || Helper.CheckIsPriority(OperationType.Call, field.Operand.ExpressionInfo.Type, false) ? $"({field.Operand.ExpressionInfo.SQL})" : field.Operand.ExpressionInfo.SQL;
 
-                return new ExpressionInfo($"convert({dataContext.NetTypeToDBType(field.DataType)}, {operandSql})", OperationType.Call);
-            }
-
-            throw new Exception("未能将指定的一元操作字段转换成 Sql 表示信息");
+            throw new Exception($"未能创建指定方法调用字段对应布尔形态的表示信息，类名：{field.MethodInfo.DeclaringType.FullName}，方法名：{field.MethodInfo.Name}");
         }
 
         /// <summary>
-        /// 初始化指定 Switch 分支字段的 Sql 表示信息。
+        /// 创建原始数据库表或视图字段的基础表示 Sql 信息。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成 Sql 表示信息字段所归属的数据源信息。</param>
-        /// <param name="field">待生成 Sql 表示信息的字段。</param>
-        /// <param name="addParameter">添加 Sql 所需的参数方法（参数为需要添加的参数，返回值代表该参数的变量名）。</param>
-        /// <returns>生成好的表示 Sql 信息。</returns>
-        public ExpressionInfo InitSwitchField(IDataContext dataContext, DataSource.DataSource dataSource, SwitchField field, Func<object, string> addParameter)
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的原始字段。</param>
+        /// <returns>该原始数据库表或视图字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateOriginalBasicSql(IParameterContext parameterContext, OriginalField field)
         {
-            field.SwitchValue.InitExpressionSQL(dataContext, dataSource, addParameter);
-            field.DefaultBody?.InitExpressionSQL(dataContext, dataSource, addParameter);
+            if (string.IsNullOrWhiteSpace(field.DataSourceAlias))
+                return new ExpressionInfo(field.FieldName, OperationType.Default);
+            else
+                return new ExpressionInfo($"{field.DataSourceAlias}.{field.FieldName}", OperationType.Default);
+        }
 
-            string switchValueSql = field.SwitchValue.ExpressionInfo.Type == OperationType.Subtract || Helper.CheckIsPriority(OperationType.Equal, field.SwitchValue.ExpressionInfo.Type, false) ? $"({field.SwitchValue.ExpressionInfo.SQL})" : field.SwitchValue.ExpressionInfo.SQL;
+        /// <summary>
+        /// 创建原始数据库表或视图字段的布尔表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的原始字段。</param>
+        /// <returns>该原始数据库表或视图字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateOriginalBoolSql(IParameterContext parameterContext, OriginalField field)
+        {
+            return new ExpressionInfo($"{field.GetBasicExpression(parameterContext).SQL} = 1", OperationType.Equal);
+        }
+
+        /// <summary>
+        /// 创建引用字段的基础表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的引用字段。</param>
+        /// <returns>该引用字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateQuoteBasicSql(IParameterContext parameterContext, QuoteField field)
+        {
+            if (string.IsNullOrWhiteSpace(field.QuoteDataSourceAlias))
+                return new ExpressionInfo(field.QuoteFieldName, OperationType.Default);
+            else
+                return new ExpressionInfo($"{field.QuoteDataSourceAlias}.{field.QuoteFieldName}", OperationType.Default);
+        }
+
+        /// <summary>
+        /// 创建引用字段的布尔表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的引用字段。</param>
+        /// <returns>该引用字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateQuoteBoolSql(IParameterContext parameterContext, QuoteField field)
+        {
+            return new ExpressionInfo($"{field.GetBasicExpression(parameterContext).SQL} = 1", OperationType.Equal);
+        }
+
+        /// <summary>
+        /// 创建子查询字段的基础表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的子查询字段。</param>
+        /// <returns>该子查询字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateSubqueryBasicSql(IParameterContext parameterContext, SubqueryField field)
+        {
+            return new ExpressionInfo(GenerateSelectSql(parameterContext, field.SelectField, field.BelongDataSource, false), OperationType.Subquery);
+        }
+
+        /// <summary>
+        /// 创建子查询字段的布尔表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的子查询字段。</param>
+        /// <returns>该子查询字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateSubqueryBoolSql(IParameterContext parameterContext, SubqueryField field)
+        {
+            return new ExpressionInfo($"({field.GetBasicExpression(parameterContext).SQL}) = 1", OperationType.Equal);
+        }
+
+        /// <summary>
+        /// 创建 Switch 分支字段的基础表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的 Switch 分支字段。</param>
+        /// <returns>该 Switch 分支字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateSwitchBasicSql(IParameterContext parameterContext, SwitchField field)
+        {
+            var switchValue = field.SwitchValue.GetBasicExpression(parameterContext);
+            ExpressionInfo defaultBody = field.DefaultBody == null ? null : field.DefaultBody.GetBasicExpression(parameterContext);
+
+            string switchValueSql = Helper.CheckIsPriority(OperationType.Equal, switchValue.Type, false) ? $"({switchValue.SQL})" : switchValue.SQL;
 
             if (field.Cases != null && field.Cases.Count > 0)
             {
@@ -1421,9 +1065,9 @@ namespace GfdbFramework.SqlServer
 
                     foreach (var testValueField in item.TestValues)
                     {
-                        testValueField.InitExpressionSQL(dataContext, dataSource, addParameter);
+                        var testValue = testValueField.GetBasicExpression(parameterContext);
 
-                        string testValueSql = testValueField.ExpressionInfo.Type == OperationType.Subtract || Helper.CheckIsPriority(OperationType.Equal, testValueField.ExpressionInfo.Type, true) ? $"({testValueField.ExpressionInfo.SQL})" : testValueField.ExpressionInfo.SQL;
+                        string testValueSql = Helper.CheckIsPriority(OperationType.Equal, testValue.Type, true) ? $"({testValue.SQL})" : testValue.SQL;
 
                         if (index > 0)
                             sql.Append(" or ");
@@ -1435,22 +1079,22 @@ namespace GfdbFramework.SqlServer
 
                     sql.Append(" then ");
 
-                    item.Body.InitExpressionSQL(dataContext, dataSource, addParameter);
+                    var testBody = item.Body.GetBasicExpression(parameterContext);
 
                     if (item.Body.Type == FieldType.Subquery)
-                        sql.Append($"({item.Body.ExpressionInfo.SQL})");
+                        sql.Append($"({testBody.SQL})");
                     else
-                        sql.Append(item.Body.ExpressionInfo.SQL);
+                        sql.Append(testBody.SQL);
                 }
 
                 if (field.DefaultBody != null)
                 {
                     sql.Append(" else ");
 
-                    if (field.DefaultBody.ExpressionInfo.Type == OperationType.Subtract)
-                        sql.Append($"({field.DefaultBody.ExpressionInfo.SQL})");
+                    if (defaultBody.Type == OperationType.Subtract)
+                        sql.Append($"({defaultBody.SQL})");
                     else
-                        sql.Append(field.DefaultBody.ExpressionInfo.SQL);
+                        sql.Append(defaultBody.SQL);
                 }
 
                 sql.Append(" end");
@@ -1459,45 +1103,249 @@ namespace GfdbFramework.SqlServer
             }
             else
             {
-                return field.DefaultBody.ExpressionInfo;
+                return defaultBody;
             }
         }
 
         /// <summary>
-        /// 生成指定数据表的插入 Sql 语句。
+        /// 创建 Switch 分支字段的布尔表示 Sql 信息。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成插入 Sql 语句的原始数据源对象。</param>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的 Switch 分支字段。</param>
+        /// <returns>该 Switch 分支字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateSwitchBoolSql(IParameterContext parameterContext, SwitchField field)
+        {
+            return new ExpressionInfo($"({field.GetBasicExpression(parameterContext).SQL}) = 1", OperationType.Equal);
+        }
+
+        /// <summary>
+        /// 创建一元操作字段的基础表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的一元操作字段。</param>
+        /// <returns>该一元操作字段对应的基础 Sql 表示结果。</returns>
+        public ExpressionInfo CreateUnaryBasicSql(IParameterContext parameterContext, UnaryField field)
+        {
+            if (field.OperationType == OperationType.Not)
+            {
+                if (field.IsBoolDataType)
+                {
+                    return BoolToBasicExpression(field.DataContext, field.GetBoolExpression(parameterContext));
+                }
+                else
+                {
+                    ExpressionInfo operand = field.Operand.GetBasicExpression(parameterContext);
+
+                    string operandSql = Helper.CheckIsPriority(OperationType.Not, operand.Type, true) ? $"({operand.SQL})" : operand.SQL;
+
+                    return new ExpressionInfo($"~{operandSql}", OperationType.Not);
+                }
+            }
+            else if (field.OperationType == OperationType.Negate)
+            {
+                ExpressionInfo operand = field.Operand.GetBasicExpression(parameterContext);
+
+                string operandSql = Helper.CheckIsPriority(OperationType.Negate, operand.Type, true) ? $"({operand.SQL})" : operand.SQL;
+
+                return new ExpressionInfo($"-{operandSql}", OperationType.Negate);
+            }
+            else if (field.OperationType == OperationType.Convert)
+            {
+                ExpressionInfo operand = field.Operand.GetBasicExpression(parameterContext);
+
+                string operandSql = operand.Type == OperationType.Subquery ? $"({operand.SQL})" : operand.SQL;
+
+                return new ExpressionInfo($"convert({field.DataContext.NetTypeToDBType(field.DataType)}, {operandSql})", OperationType.Call);
+            }
+
+            throw new Exception($"未能创建指定一元操作字段对应的基础表示信息，操作类型为：{field.OperationType}");
+        }
+
+        /// <summary>
+        /// 创建一元操作字段的布尔表示 Sql 信息。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="field">待创建表示 Sql 信息的一元操作字段。</param>
+        /// <returns>该一元操作字段对应的布尔 Sql 表示结果。</returns>
+        public ExpressionInfo CreateUnaryBoolSql(IParameterContext parameterContext, UnaryField field)
+        {
+            if (field.OperationType == OperationType.Not && field.IsBoolDataType)
+            {
+                if (field.Operand.Type == FieldType.Method)
+                {
+                    MethodField operandMethodField = (MethodField)field.Operand;
+
+                    if (operandMethodField.MethodInfo.ReflectedType == _StringType && operandMethodField.Parameters != null && operandMethodField.Parameters.Count == 1 && operandMethodField.Parameters[0].DataType == _StringType && operandMethodField.Parameters[0] is BasicField parameter)
+                    {
+                        //对 string 静态的 IsNullOrEmpty 或 IsNullOrWhiteSpace 方法取反时做特殊操作
+                        if ((operandMethodField.MethodInfo.Name == "IsNullOrEmpty" || operandMethodField.MethodInfo.Name == "IsNullOrWhiteSpace") && operandMethodField.ObjectField == null)
+                        {
+                            ExpressionInfo param = parameter.GetBasicExpression(parameterContext);
+
+                            string parameterString = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
+
+                            if (operandMethodField.MethodInfo.Name == "IsNullOrEmpty")
+                                return new ExpressionInfo($"{parameterString} is not null and {parameterString} != ''", OperationType.AndAlso);
+                            else
+                                return new ExpressionInfo($"{parameterString} is not null and trim({parameterString}) != ''", OperationType.AndAlso);
+                        }
+                        //对 string  类型的 StartsWith 或 Contains 方法取反时做特殊操作
+                        else if (operandMethodField.ObjectField != null && operandMethodField.ObjectField is BasicField basicField && (operandMethodField.MethodInfo.Name == "StartsWith" || operandMethodField.MethodInfo.Name == "Contains"))
+                        {
+                            ExpressionInfo basic = basicField.GetBasicExpression(parameterContext);
+                            ExpressionInfo param = parameter.GetBasicExpression(parameterContext);
+
+                            string objectSql = basic.Type == OperationType.Subquery ? $"({basic})" : basic.SQL;
+                            string searchString = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
+                            string checkString = operandMethodField.MethodInfo.Name == "StartsWith" ? "!=" : "<";
+
+                            if (field.DataContext.IsCaseSensitive)
+                                return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
+                            else
+                                return new ExpressionInfo($"charIndex({searchString}, {objectSql}) {checkString} 1", operandMethodField.MethodInfo.Name == "StartsWith" ? OperationType.NotEqual : OperationType.LessThan);
+                        }
+                        //对 string  类型的 EndsWith 方法取反时做特殊操作
+                        else if (operandMethodField.ObjectField != null && operandMethodField.ObjectField is BasicField stringField && operandMethodField.MethodInfo.Name == "EndsWith")
+                        {
+                            ExpressionInfo basic = stringField.GetBasicExpression(parameterContext);
+                            ExpressionInfo param = parameter.GetBasicExpression(parameterContext);
+
+                            string objectSql = basic.Type == OperationType.Subquery ? $"({basic})" : basic.SQL;
+                            string searchString = param.Type == OperationType.Subquery ? $"({param.SQL})" : param.SQL;
+
+                            if (field.DataContext.IsCaseSensitive)
+                                return new ExpressionInfo($"charIndex({searchString}, {objectSql} {_CASE_SENSITIVE_MARK}) != len({objectSql}) - len({searchString}) + 1", OperationType.NotEqual);
+                            else
+                                return new ExpressionInfo($"charIndex({searchString}, {objectSql}) != len({objectSql}) - len({searchString}) + 1", OperationType.NotEqual);
+                        }
+                    }
+                }
+                else
+                {
+                    ExpressionInfo operand = field.Operand.GetBasicExpression(parameterContext);
+
+                    string operandSql = Helper.CheckIsPriority(OperationType.Equal, operand.Type, false) ? $"({operand.SQL})" : operand.SQL;
+
+                    return new ExpressionInfo($"{operandSql} = 0", OperationType.Equal);
+                }
+            }
+
+            throw new Exception($"未能创建指定一元操作字段对应布尔形态的表示信息，操作类型为：{field.OperationType}");
+        }
+
+        /// <summary>
+        /// 对指定的原始字段名进行编码。
+        /// </summary>
+        /// <param name="name">需要编码的原始字段名。</param>
+        /// <returns>编码后的名称。</returns>
+        public string EncodeFieldName(string name)
+        {
+            return $"[{name}]";
+        }
+
+        /// <summary>
+        /// 对指定的原始表名进行编码。
+        /// </summary>
+        /// <param name="name">需要编码的原始表名。</param>
+        /// <returns>编码后的名称。</returns>
+        public string EncodeTableName(string name)
+        {
+            return $"[{name}]";
+        }
+
+        /// <summary>
+        /// 对指定的原始视图名进行编码。
+        /// </summary>
+        /// <param name="name">需要编码的原始视图名。</param>
+        /// <returns>编码后的名称。</returns>
+        public string EncodeViewName(string name)
+        {
+            return $"[{name}]";
+        }
+
+        /// <summary>
+        /// 使用指定的别名下标生成一个数据源别名（必须保证不同下标生成的别名不同，相同下标生成的别名相同，且所生成的别名不得是数据库中的关键字）。
+        /// </summary>
+        /// <param name="aliasIndex">生成别名所使用的下标。</param>
+        /// <returns>使用指定别名下标生成好的别名。</returns>
+        public string GenerateDataSourceAlias(int aliasIndex)
+        {
+            return $"T{aliasIndex}";
+        }
+
+        /// <summary>
+        /// 生成指定数据源对应的删除 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="deletingDataSources">需要删除数据行的源数组。</param>
+        /// <param name="fromDataSource">待删除数据行的目标来源。</param>
+        /// <param name="where">删除数据行时的条件字段。</param>
+        /// <returns>生成好的删除 Sql 语句。</returns>
+        public string GenerateDeleteSql(IParameterContext parameterContext, TableDataSource[] deletingDataSources, DataSource.DataSource fromDataSource, BasicField where)
+        {
+            if (where == null && deletingDataSources.Length == 1 && deletingDataSources[0] == fromDataSource)
+            {
+                return $"delete from {deletingDataSources[0].Name}";
+            }
+            else
+            {
+                if (deletingDataSources.Length > 1)
+                    throw new Exception("Sql Server 不支持一次性删除多个数据表的数据");
+
+                StringBuilder deleteSql = new StringBuilder("delete ");
+
+                for (int i = 0; i < deletingDataSources.Length; i++)
+                {
+                    if (i > 0)
+                        deleteSql.Append(",");
+
+                    deleteSql.Append(deletingDataSources[i].Alias);
+                }
+
+                deleteSql.Append(" from ");
+
+                deleteSql.Append(GenerateFromSql(parameterContext, fromDataSource, false));
+
+                if (where != null)
+                {
+                    deleteSql.Append(" where ");
+
+                    deleteSql.Append(where.GetBoolExpression(parameterContext).SQL);
+                }
+
+                return deleteSql.ToString();
+            }
+        }
+
+        /// <summary>
+        /// 使用指定的别名下标生成一个字段别名（必须保证不同下标生成的别名不同，相同下标生成的别名相同，且所生成的别名不得是数据库中的关键字）。
+        /// </summary>
+        /// <param name="aliasIndex">生成别名所使用的下标。</param>
+        /// <returns>使用指定别名下标生成好的别名。</returns>
+        public string GenerateFieldAlias(int aliasIndex)
+        {
+            return $"F{aliasIndex}";
+        }
+
+        /// <summary>
+        /// 生成指定数据源对应的插入 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="dataSource">待生成语句的数据源对象。</param>
         /// <param name="fields">需要插入的字段集合。</param>
-        /// <param name="values">需要插入字段对应的值集合。</param>
-        /// <param name="parameters">执行生成 Sql 所需使用的参数集合。</param>
+        /// <param name="args">需要插入字段对应的参数集合。</param>
         /// <returns>生成好的插入 Sql 语句。</returns>
-        public string GenerateInsertSql(IDataContext dataContext, OriginalDataSource dataSource, Interface.IReadOnlyList<OriginalField> fields, Interface.IReadOnlyList<BasicField> values, out Interface.IReadOnlyList<DbParameter> parameters)
+        public string GenerateInsertSql(IParameterContext parameterContext, TableDataSource dataSource, ReadOnlyList<OriginalField> fields, ReadOnlyList<BasicField> args)
         {
             StringBuilder insertFields = new StringBuilder();
             StringBuilder insertValues = new StringBuilder();
-            Dictionary<object, DbParameter> pars = new Dictionary<object, DbParameter>();
-
-            string addParameterFun(object item)
-            {
-                item = item ?? DBNull.Value;
-
-                if (!pars.TryGetValue(item, out DbParameter dbParameter))
-                {
-                    dbParameter = new SqlParameter($"P{pars.Count}", item);
-
-                    pars.Add(item, dbParameter);
-                }
-
-                return $"@{dbParameter.ParameterName}";
-            };
 
             for (int i = 0; i < fields.Count; i++)
             {
                 OriginalField field = fields[i];
-                BasicField valueField = values[i];
+                BasicField valueField = args[i];
 
-                valueField.InitExpressionSQL(dataContext, dataSource, addParameterFun);
+                var value = valueField.GetBasicExpression(parameterContext);
 
                 if (i > 0)
                 {
@@ -1507,199 +1355,162 @@ namespace GfdbFramework.SqlServer
 
                 insertFields.Append(field.FieldName);
 
-                if (valueField.Type == FieldType.Subquery)
-                    insertValues.Append($"({values[i].ExpressionInfo.SQL})");
+                if (value.Type == OperationType.Subquery)
+                    insertValues.Append($"({value.SQL})");
                 else
-                    insertValues.Append($"{values[i].ExpressionInfo.SQL}");
+                    insertValues.Append(value.SQL);
             }
-
-            parameters = new Realize.ReadOnlyList<DbParameter>(pars.Values);
 
             return $"insert into {dataSource.Name}({insertFields}) values ({insertValues})";
         }
 
         /// <summary>
-        /// 生成指定数据表的插入 Sql 语句。
+        /// 生成指定数据源对应的插入 Sql 语句。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="dataSource">待生成插入 Sql 语句的原始数据源对象。</param>
-        /// <param name="fields">需要插入的字段集合。</param>
-        /// <param name="entitys">需要插入的查询结果数据源。</param>
-        /// <param name="parameters">执行生成 Sql 所需使用的参数集合。</param>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="dataSource">待生成语句的数据源对象。</param>
+        /// <param name="insertDataSource">需要插入到数据表的数据源。</param>
         /// <returns>生成好的插入 Sql 语句。</returns>
-        public string GenerateInsertSql(IDataContext dataContext, OriginalDataSource dataSource, Interface.IReadOnlyList<OriginalField> fields, BasicDataSource entitys, out Interface.IReadOnlyList<DbParameter> parameters)
+        public string GenerateInsertSql(IParameterContext parameterContext, TableDataSource dataSource, BasicDataSource insertDataSource)
         {
             StringBuilder insertFields = new StringBuilder();
 
-            foreach (var item in fields)
+            ObjectField insertField = (ObjectField)(insertDataSource.SelectField ?? insertDataSource.RootField);
+
+            if (insertField.ConstructorInfo != null && insertField.ConstructorInfo.Parameters != null && insertField.ConstructorInfo.Parameters.Count > 0)
             {
-                if (insertFields.Length > 0)
-                    insertFields.Append(",");
-
-                insertFields.Append(item.FieldName);
-            }
-
-            return $"insert into {dataSource.Name}({insertFields}) {GenerateQuerySql(dataContext, entitys, false, out parameters)}";
-        }
-
-        /// <summary>
-        /// 生成指定数据表的数据删除 Sql 语句。
-        /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="deleteSources">待删除数据行的源数组。</param>
-        /// <param name="fromSource">待删除数据行的来源数据。</param>
-        /// <param name="where">删除时的条件限定字段信息。</param>
-        /// <param name="parameters">执行生成 Sql 所需使用的参数集合。</param>
-        /// <returns>生成好的数据删除 Sql 语句。</returns>
-        public string GenerateDeleteSql(IDataContext dataContext, OriginalDataSource[] deleteSources, DataSource.DataSource fromSource, BasicField where, out Interface.IReadOnlyList<DbParameter> parameters)
-        {
-            if (where == null && deleteSources.Length == 1 && deleteSources[0] == fromSource)
-            {
-                parameters = null;
-
-                return $"delete from {deleteSources[0].Name}";
+                throw new Exception($"生成 {insertField.DataType.FullName} 类所映射数据库表的查询插入 Sql 语句时，查询对象的实例不能有构造参数");
             }
             else
             {
-                if (deleteSources.Length > 1)
-                    throw new Exception("Sql Server 不支持一次性删除多个数据表的数据");
+                ObjectField rootField = (ObjectField)dataSource.RootField;
 
-                Dictionary<object, DbParameter> pars = new Dictionary<object, DbParameter>();
-
-                StringBuilder deleteSql = new StringBuilder("delete ");
-
-                for (int i = 0; i < deleteSources.Length; i++)
+                foreach (var item in insertField.Members)
                 {
-                    if (i > 0)
-                        deleteSql.Append(",");
+                    if (insertFields.Length > 0)
+                        insertFields.Append(",");
 
-                    deleteSql.Append(deleteSources[i].Alias);
-                }
-
-                string addParameterFun(object item)
-                {
-                    item = item ?? DBNull.Value;
-
-                    if (!pars.TryGetValue(item, out DbParameter dbParameter))
+                    if (rootField.Members.TryGetValue(item.Key, out Core.MemberInfo memberInfo))
                     {
-                        dbParameter = new SqlParameter($"P{pars.Count}", item);
-
-                        pars.Add(item, dbParameter);
+                        if (memberInfo.Field.Type == FieldType.Original)
+                            insertFields.Append(((OriginalField)memberInfo.Field).FieldName);
+                        else
+                            throw new Exception($"生成 {rootField.DataType.FullName} 类所映射数据库表的插入语句时，{item.Key} 成员并非是原始数据字段");
                     }
-
-                    return $"@{dbParameter.ParameterName}";
+                    else
+                    {
+                        throw new Exception($"生成 {rootField.DataType.FullName} 类所映射数据库表的插入语句时，{item.Key} 成员未找到");
+                    }
                 }
 
-                deleteSql.Append(" from ");
+                string querySql = GenerateSelectSql(parameterContext, insertDataSource.SelectField ?? insertDataSource.RootField, insertDataSource, false);
 
-                deleteSql.Append(GenerateFromSql(dataContext, fromSource, false, addParameterFun));
+                if (insertDataSource.Type == SourceType.Union)
+                    querySql = $"({querySql})";
 
-                if (where != null)
-                {
-                    where.InitExpressionSQL(dataContext, fromSource, addParameterFun);
-
-                    deleteSql.Append(" where ");
-
-                    deleteSql.Append(where.BooleanInfo.SQL);
-                }
-
-                parameters = pars.Count > 0 ? new Realize.ReadOnlyList<DbParameter>(pars.Values) : null;
-
-                return deleteSql.ToString();
+                return $"insert into { dataSource.Name }({ insertFields }) { querySql }";
             }
         }
 
         /// <summary>
-        /// 生成指定数据表的数据更新 Sql 语句。
+        /// 生成指定数据源对应的查询 Sql 语句。
         /// </summary>
-        /// <param name="dataContext">数据操作上下文对象。</param>
-        /// <param name="modifyFields">需要修改的字段信息集合。</param>
-        /// <param name="dataSource">待修改数据的来源数据。</param>
-        /// <param name="where">修改时的条件限定字段信息。</param>
-        /// <param name="parameters">执行生成 Sql 所需使用的参数集合。</param>
-        /// <returns>生成好的数据更新 Sql 语句。</returns>
-        public string GenerateUpdateSql(IDataContext dataContext, Interface.IReadOnlyList<ModifyInfo> modifyFields, DataSource.DataSource dataSource, BasicField where, out Interface.IReadOnlyList<DbParameter> parameters)
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="dataSource">待生成语句的数据源对象。</param>
+        /// <returns>生成好的查询 Sql 语句。</returns>
+        public string GenerateSelectSql(IParameterContext parameterContext, BasicDataSource dataSource)
         {
-            string updateSource = null;
-            StringBuilder setSql = new StringBuilder();
-
-            Dictionary<object, DbParameter> pars = new Dictionary<object, DbParameter>();
-
-            string addParameterFun(object item)
-            {
-                item = item ?? DBNull.Value;
-
-                if (!pars.TryGetValue(item, out DbParameter dbParameter))
-                {
-                    dbParameter = new SqlParameter($"P{pars.Count}", item);
-
-                    pars.Add(item, dbParameter);
-                }
-
-                return $"@{dbParameter.ParameterName}";
-            };
-
-            foreach (var item in modifyFields)
-            {
-                if (updateSource == null)
-                    updateSource = item.DataSource.Alias;
-                else if (updateSource != item.DataSource.Alias)
-                    throw new Exception("Sql Server 不支持一次性修改多个数据表的数据");
-
-                if (setSql.Length > 0)
-                    setSql.Append(",");
-
-                item.Field.InitExpressionSQL(dataContext, item.DataSource, addParameterFun);
-                item.Value.InitExpressionSQL(dataContext, dataSource, addParameterFun);
-
-                setSql.Append(item.Field.ExpressionInfo.SQL);
-                setSql.Append("=");
-
-                if (item.Value.Type == FieldType.Subquery)
-                {
-                    setSql.Append("(");
-                    setSql.Append(item.Value.ExpressionInfo.SQL);
-                    setSql.Append(")");
-                }
-                else
-                {
-                    setSql.Append(item.Value.ExpressionInfo.SQL);
-                }
-            }
-
-            where?.InitExpressionSQL(dataContext, dataSource, addParameterFun);
-
-            string result;
-
-            if (where == null)
-                result = $"update {updateSource} set {setSql} from {GenerateFromSql(dataContext, dataSource, false, addParameterFun)}";
-            else
-                result = $"update {updateSource} set {setSql} from {GenerateFromSql(dataContext, dataSource, false, addParameterFun)} where {where.BooleanInfo.SQL}";
-
-            parameters = pars.Count > 0 ? new Realize.ReadOnlyList<DbParameter>(pars.Values) : null;
-
-            return result;
+            return GenerateSelectSql(parameterContext, dataSource.SelectField ?? dataSource.RootField, dataSource, true);
         }
 
         /// <summary>
-        /// 使用指定的数据库信息生成创建该数据库的 T-Sql 语句。
+        /// 生成指定数据源对应的更新 Sql 语句。
         /// </summary>
-        /// <param name="databaseInfo">待生成创建 T-Sql 语句的数据库信息。</param>
-        /// <returns>生成好用于创建该数据库的 T-Sql 语句。</returns>
-        internal string GenerateCreateDatabaseSql(DatabaseInfo databaseInfo)
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="updateGroups">所有待更新的数据组。</param>
+        /// <param name="fromDataSource">待更新数据的目标来源。</param>
+        /// <param name="where">更新数据行时的条件字段。</param>
+        /// <returns>生成好的更新 Sql 语句。</returns>
+        public string GenerateUpdateSql(IParameterContext parameterContext, ReadOnlyList<UpdateGroup> updateGroups, DataSource.DataSource fromDataSource, BasicField where)
+        {
+            if (updateGroups.Count > 1)
+            {
+                throw new Exception("Sql Server 不支持一次性修改多个数据表的数据");
+            }
+            else
+            {
+                StringBuilder setSql = new StringBuilder();
+
+                foreach (var item in updateGroups[0].UpdateFields)
+                {
+                    if (setSql.Length > 0)
+                        setSql.Append(",");
+
+                    var value = item.Value.GetBasicExpression(parameterContext);
+
+                    setSql.Append(item.Field.GetBasicExpression(parameterContext).SQL);
+
+                    setSql.Append(" = ");
+
+                    if (value.Type == OperationType.Subquery)
+                        setSql.Append($"({value.SQL})");
+                    else
+                        setSql.Append(value.SQL);
+                }
+
+                string result;
+
+                if (where == null)
+                    result = $"update {updateGroups[0].UpdateSource.Alias} set {setSql} from {GenerateFromSql(parameterContext, fromDataSource, false)}";
+                else
+                    result = $"update {updateGroups[0].UpdateSource.Alias} set {setSql} from {GenerateFromSql(parameterContext, fromDataSource, false)} where {where.GetBoolExpression(parameterContext).SQL}";
+
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// 生成校验某个数据库是否存在的 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="databaseInfo">需要创建校验 Sql 语句的数据库信息。</param>
+        /// <returns>生成好的校验 Sql 语句。</returns>
+        internal string GenerateExistsDatabaseSql(IParameterContext parameterContext, DatabaseInfo databaseInfo)
+        {
+            return $"select count(1) from master..sysdatabases where name = {parameterContext.Add(databaseInfo.Name)}";
+        }
+
+        /// <summary>
+        /// 生成删除某个数据库的 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="databaseInfo">需要创建删除 Sql 语句的数据库信息。</param>
+        /// <returns>生成好的删除 Sql 语句。</returns>
+        internal string GenerateDeleteDatabaseSql(IParameterContext parameterContext, DatabaseInfo databaseInfo)
+        {
+            return $"drop database {databaseInfo.Name}";
+        }
+
+        /// <summary>
+        /// 生成指定数据库的创建 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="databaseInfo">待生成创建 Sql 语句的数据库信息。</param>
+        /// <returns>生成好的创建 Sql 语句。</returns>
+        internal string GenerateCreateDatabaseSql(IParameterContext parameterContext, DatabaseInfo databaseInfo)
         {
             if (databaseInfo.Files == null || databaseInfo.Files.Count < 1)
             {
                 string databasePath = Path.Combine(Path.GetDirectoryName(GetType().Assembly.Location), "Databases");
 
-                databaseInfo.Files = new List<Core.FileInfo>()
+                databaseInfo.Files = new List<DatabaseFile>()
                 {
-                    new Core.FileInfo()
+                    new DatabaseFile()
                     {
                         Path = Path.Combine(databasePath, $"{databaseInfo.Name}.mdf"),
                         Type = FileType.Data
                     },
-                    new Core.FileInfo()
+                    new DatabaseFile()
                     {
                         Path = Path.Combine(databasePath, $"{databaseInfo.Name}_log.ldf"),
                         Type = FileType.Log
@@ -1707,79 +1518,136 @@ namespace GfdbFramework.SqlServer
                 };
             }
 
-            string primaryInfo = null;
-            string logInfo = null;
+            DatabaseExtraInfo extraInfo = null;
 
-            foreach (var item in databaseInfo.Files)
+            StringBuilder createSql;
+
+            if (databaseInfo.ExtraInfo != null && databaseInfo.ExtraInfo is DatabaseExtraInfo)
+                extraInfo = (DatabaseExtraInfo)databaseInfo.ExtraInfo;
+
+            if (extraInfo != null && extraInfo.IsAttach)
             {
-                if (string.IsNullOrWhiteSpace(item.Path))
-                    throw new ArgumentException("创建数据库时保存数据库的文件路径不能为空");
+                createSql = new StringBuilder($"create database {databaseInfo.Name}{Environment.NewLine}on");
 
-                string filePath = Path.GetDirectoryName(item.Path);
+                int index = 0;
 
-                if (!Directory.Exists(filePath))
-                    Directory.CreateDirectory(filePath);
+                foreach (var item in databaseInfo.Files)
+                {
+                    if (string.IsNullOrWhiteSpace(item.Path))
+                        throw new ArgumentException("创建 Sql Server 数据库时保存数据库的文件路径不能为空");
 
-                StringBuilder info = new StringBuilder($"name = {Path.GetFileNameWithoutExtension(item.Path)}, fileName = N'{item.Path}'");
+                    if (!File.Exists(item.Path))
+                        throw new Exception($"附加 Sql Server 数据库时文件不存在，文件路径：{item.Path}");
 
-                info.AppendFormat(", size = {0}MB", item.Size > 0 ? item.Size / 1024 : 2);
-                info.AppendFormat(", fileGrowth = {0}{1}", item.Growth > 0 ? (item.GrowthMode == GrowthMode.Percentage ? (long)(item.Growth * 100) : (long)item.Growth / 1024) : 64, item.Growth > 0 && item.GrowthMode == GrowthMode.Percentage ? "%" : "MB");
+                    if (index > 0)
+                        createSql.Append(",");
 
-                if (item.MaxSize > 0)
-                    info.AppendFormat(", maxSize = {0}MB", item.MaxSize / 1024);
+                    createSql.Append($"{Environment.NewLine}(fileName = N'{item.Path}')");
 
-                if (item.Type == FileType.Data)
-                    primaryInfo = info.ToString();
-                else if (item.Type == FileType.Log)
-                    logInfo = info.ToString();
+                    index++;
+                }
+
+                createSql.Append($"{Environment.NewLine}for attach");
             }
-
-            if (primaryInfo == null)
-                throw new ArgumentException("创建数据库时保存数据库的主文件信息不能为空");
-
-            StringBuilder createSql = new StringBuilder($"create database {databaseInfo.Name} on primary ({primaryInfo})");
-
-            if (logInfo != null)
-                createSql.AppendFormat(" log on ({0})", logInfo);
-
-            if (databaseInfo.ExtraInfo != null && databaseInfo.ExtraInfo is DatabaseExtraInfo extraInfo)
+            else
             {
-                createSql.Append(Environment.NewLine);
+                string primaryInfo = null;
+                string logInfo = null;
 
-                if (extraInfo.CompatibilityLevel >= 100)
-                    createSql.AppendFormat("alter database {0} set compatibility_level = {1}{2}", databaseInfo.Name, extraInfo.CompatibilityLevel, Environment.NewLine);
+                foreach (var item in databaseInfo.Files)
+                {
+                    if (string.IsNullOrWhiteSpace(item.Path))
+                        throw new ArgumentException("创建数据库时保存数据库的文件路径不能为空");
 
-                if (extraInfo.RecoveryMode != RecoveryMode.Default)
-                    createSql.AppendFormat("alter database {0} set recovery {1}{2}", databaseInfo.Name, extraInfo.RecoveryMode == RecoveryMode.Full ? "full" : extraInfo.RecoveryMode == RecoveryMode.Simple ? "simple" : "bulk_logged", Environment.NewLine);
+                    string filePath = Path.GetDirectoryName(item.Path);
 
-                if (!string.IsNullOrWhiteSpace(extraInfo.SortRule))
-                    createSql.AppendFormat("alter database {0} set collate {1}{2}", databaseInfo.Name, extraInfo.SortRule, Environment.NewLine);
+                    if (!Directory.Exists(filePath))
+                        Directory.CreateDirectory(filePath);
 
-                if (!string.IsNullOrWhiteSpace(extraInfo.Owner))
-                    createSql.AppendFormat("exec {0}.dbo.sp_changedbowner N'{1}'{2}", databaseInfo.Name, extraInfo.Owner, Environment.NewLine);
+                    StringBuilder info = new StringBuilder($"name = {Path.GetFileNameWithoutExtension(item.Path)}, fileName = N'{item.Path}'");
+
+                    info.Append($", size = {(item.Size > 0 ? item.Size / 1024 : 2)}MB");
+                    info.Append($", fileGrowth = {(item.Growth > 0 ? (item.GrowthMode == GrowthMode.Percentage ? (long)(item.Growth * 100) : (long)item.Growth / 1024) : 64)}{(item.Growth > 0 && item.GrowthMode == GrowthMode.Percentage ? "%" : "MB")}");
+
+                    if (item.MaxSize > 0)
+                        info.Append($", maxSize = {item.MaxSize / 1024}MB");
+
+                    if (item.Type == FileType.Data)
+                        primaryInfo = info.ToString();
+                    else if (item.Type == FileType.Log)
+                        logInfo = info.ToString();
+                }
+
+                if (primaryInfo == null)
+                    throw new ArgumentException("创建 Sql Server 数据库时保存数据库的主文件信息不能为空");
+
+                createSql = new StringBuilder($"create database {databaseInfo.Name} on primary ({primaryInfo})");
+
+                if (logInfo != null)
+                    createSql.AppendFormat($" log on ({logInfo})");
+
+                if (extraInfo != null)
+                {
+                    createSql.Append(Environment.NewLine);
+
+                    if (extraInfo.CompatibilityLevel >= 100)
+                        createSql.AppendFormat("alter database {0} set compatibility_level = {1}{2}", databaseInfo.Name, extraInfo.CompatibilityLevel, Environment.NewLine);
+
+                    if (extraInfo.RecoveryMode != RecoveryMode.Default)
+                        createSql.AppendFormat("alter database {0} set recovery {1}{2}", databaseInfo.Name, extraInfo.RecoveryMode == RecoveryMode.Full ? "full" : extraInfo.RecoveryMode == RecoveryMode.Simple ? "simple" : "bulk_logged", Environment.NewLine);
+
+                    if (!string.IsNullOrWhiteSpace(extraInfo.SortRule))
+                        createSql.AppendFormat("alter database {0} set collate {1}{2}", databaseInfo.Name, extraInfo.SortRule, Environment.NewLine);
+
+                    if (!string.IsNullOrWhiteSpace(extraInfo.Owner))
+                        createSql.AppendFormat("exec {0}.dbo.sp_changedbowner N'{1}'{2}", databaseInfo.Name, extraInfo.Owner, Environment.NewLine);
+                }
             }
 
             return createSql.ToString();
         }
 
         /// <summary>
-        /// 使用指定的原始数据源信息生成创建该数据表或视图的 T-Sql 语句。
+        /// 生成校验某个数据库表是否存在的 Sql 语句。
         /// </summary>
-        /// <param name="dataSource">待生成创建 T-Sql 语句的数据源信息。</param>
-        /// <returns>生成好用于创建该数据表或视图的 T-Sql 语句。</returns>
-        internal string GenerateCreateTableSql(OriginalDataSource dataSource)
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="tableName">需要创建校验 Sql 语句的数据库表名称。</param>
+        /// <returns>生成好的校验 Sql 语句。</returns>
+        internal string GenerateExistsTableSql(IParameterContext parameterContext, string tableName)
+        {
+            return $"select object_id({parameterContext.Add(tableName)}, N'U')";
+        }
+
+        /// <summary>
+        /// 生成校验某个数据库视图是否存在的 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="viewName">需要创建校验 Sql 语句的数据库视图名称。</param>
+        /// <returns>生成好的校验 Sql 语句。</returns>
+        internal string GenerateExistsViewSql(IParameterContext parameterContext, string viewName)
+        {
+            return $"select count(1) from sys.views where name = {parameterContext.Add(viewName)}";
+        }
+
+        /// <summary>
+        /// 生成创建数据库表的 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="tableDataSource">需要生成创建数据库表 Sql 语句的数据源。</param>
+        /// <returns>生成好的创建 Sql 语句。</returns>
+        internal string GenerateCreateTableSql(IParameterContext parameterContext, TableDataSource tableDataSource)
         {
             StringBuilder fields = new StringBuilder();
             StringBuilder uniqueConstraints = new StringBuilder();
             StringBuilder extendedPropertys = new StringBuilder();
             StringBuilder indices = new StringBuilder();
 
-            foreach (var item in ((ObjectField)dataSource.RootField).Members)
+            foreach (var item in ((ObjectField)tableDataSource.RootField).Members)
             {
                 OriginalField field = (OriginalField)item.Value.Field;
 
                 if (fields.Length > 0)
-                    fields.AppendFormat(",{0}", Environment.NewLine);
+                    fields.Append($",{Environment.NewLine}");
 
                 fields.Append($"{field.FieldName} {field.FieldType}");
 
@@ -1803,25 +1671,28 @@ namespace GfdbFramework.SqlServer
 
                 if (field.DefaultValue != null)
                 {
-                    string valueType = field.DataType.FullName;
-
-                    if (valueType == _INT_TYPE_NAME
-                        || valueType == "System.UInt32"
-                        || valueType == "System.UInt64"
-                        || valueType == "System.UInt16"
-                        || valueType == "System.SByte"
-                        || valueType == _LONG_TYPE_NAME
-                        || valueType == _BYTE_TYPE_NAME
-                        || valueType == _SHORT_TYPE_NAME
-                        || valueType == _FLOAT_TYPE_NAME
-                        || valueType == _DOUBLE_TYPE_NAME
-                        || valueType == _BOOL_TYPE_NAME
-                        || valueType == _DECIMAL_TYPE_NAME
-                        || field.DataType.IsEnum
-                        || (new Regex(@"^\s*getdate\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == _DATETIME_TYPE_NAME)
-                        || (new Regex(@"^\s*newid\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()) && valueType == "System.Guid"))
+                    if (field.DataType == _IntType
+                        || field.DataType == _UIntType
+                        || field.DataType == _LongType
+                        || field.DataType == _ULongType
+                        || field.DataType == _ShortType
+                        || field.DataType == _UShortType
+                        || field.DataType == _ByteType
+                        || field.DataType == _SByteType
+                        || field.DataType == _FloatType
+                        || field.DataType == _DoubleType
+                        || field.DataType == _DecimalType
+                        || field.DataType == _DateTimeType && new Regex(@"^\s*getdate\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString())
+                        || field.DataType == _GuidType && new Regex(@"^\s*newid\s*\(\s*\)\s*$", RegexOptions.IgnoreCase).IsMatch(field.DefaultValue.ToString()))
                     {
-                        fields.AppendFormat(" default {0}", field.DefaultValue);
+                        fields.Append($" default {field.DefaultValue}");
+                    }
+                    else if (field.DataType == _BoolType)
+                    {
+                        if (field.DefaultValue is bool bitValue)
+                            fields.Append($" default {(bitValue ? "1" : "0")}");
+                        else
+                            fields.Append($" default {field.DefaultValue}");
                     }
                     else
                     {
@@ -1840,13 +1711,13 @@ namespace GfdbFramework.SqlServer
                     if (extendedPropertys.Length > 0)
                         extendedPropertys.Append(Environment.NewLine);
 
-                    extendedPropertys.Append($"exec sp_addExtendedProperty 'MS_Description', N'{field.Explain}', N'user', N'dbo', N'table', N'{dataSource.Name}', N'column', N'{field.FieldName}'");
+                    extendedPropertys.Append($"exec sp_addExtendedProperty 'MS_Description', N'{field.Explain}', N'user', N'dbo', N'table', N'{tableDataSource.Name}', N'column', N'{field.FieldName}'");
                 }
             }
 
-            if (dataSource.Indices != null && dataSource.Indices.Count > 0)
+            if (tableDataSource.Indices != null && tableDataSource.Indices.Count > 0)
             {
-                foreach (var item in dataSource.Indices)
+                foreach (var item in tableDataSource.Indices)
                 {
                     if (indices.Length > 0)
                         indices.Append(Environment.NewLine);
@@ -1856,7 +1727,7 @@ namespace GfdbFramework.SqlServer
                     else
                         indices.Append("create index ");
 
-                    indices.Append($"{item.Name} on [dbo].{dataSource.Name}(");
+                    indices.Append($"{item.Name} on [dbo].{tableDataSource.Name}(");
 
                     for (int i = 0; i < item.Fields.Count; i++)
                     {
@@ -1877,40 +1748,377 @@ namespace GfdbFramework.SqlServer
 
             StringBuilder createSql = new StringBuilder("create table [dbo].");
 
-            createSql.Append(dataSource.Name);
+            createSql.Append(tableDataSource.Name);
 
             createSql.AppendLine("(");
 
             createSql.Append(fields);
 
             if (uniqueConstraints.Length > 0)
-                createSql.AppendFormat(",{0}{1}", Environment.NewLine, uniqueConstraints);
+                createSql.Append($",{Environment.NewLine}{uniqueConstraints}");
 
-            createSql.AppendFormat("{0}){0}", Environment.NewLine);
+            createSql.Append($"{Environment.NewLine}){Environment.NewLine}");
 
             if (indices.Length > 0)
-                createSql.AppendFormat("{0}{1}", Environment.NewLine, indices);
+                createSql.Append($"{Environment.NewLine}{indices}");
 
             if (extendedPropertys.Length > 0)
-                createSql.AppendFormat("{0}{1}", Environment.NewLine, extendedPropertys);
+                createSql.AppendFormat($"{Environment.NewLine}{extendedPropertys}");
 
             return createSql.ToString();
         }
 
         /// <summary>
-        /// 生成一个用于查询所有已存在数据表的 Sql 语句。
+        /// 生成创建数据库视图的 Sql 语句。
         /// </summary>
-        /// <returns>创建好用于查询所有已存在数据表的 Sql 语句。</returns>
-        internal string GenerateQueryAllTableSql()
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="viewDataSource">需要生成创建数据库视图 Sql 语句的数据源。</param>
+        /// <returns>生成好的创建 Sql 语句。</returns>
+        internal string GenerateCreateViewSql(IParameterContext parameterContext, ViewDataSource viewDataSource)
         {
-            return "select [name] from sysobjects where xtype='u'";
+            return $"create view [dbo].{viewDataSource.Name}{Environment.NewLine}as{Environment.NewLine}{viewDataSource.CreateSQL}";
         }
 
         /// <summary>
-        /// 释放当前对象所占用的资源信息。
+        /// 生成删除数据库表的 Sql 语句。
         /// </summary>
-        public void Dispose()
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="tableDataSource">需要生成删除数据库表 Sql 语句的数据源。</param>
+        /// <returns>生成好的删除 Sql 语句。</returns>
+        internal string GenerateDeleteTableSql(IParameterContext parameterContext, TableDataSource tableDataSource)
         {
+            return $"drop table {tableDataSource.Name}";
+        }
+
+        /// <summary>
+        /// 生成删除数据库视图的 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="viewSource">需要生成删除数据库视图 Sql 语句的数据源。</param>
+        /// <returns>生成好的删除 Sql 语句。</returns>
+        internal string GenerateDeleteViewSql(IParameterContext parameterContext, ViewDataSource viewSource)
+        {
+            return $"drop view {viewSource.Name}";
+        }
+
+        /// <summary>
+        /// 生成一个用于查询所有数据库表名的 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <returns>生成好的查询 Sql 语句。</returns>
+        internal string GenerateSelectAllTableNameSql(IParameterContext parameterContext)
+        {
+            return "select [Name] from SysObjects where xType='U'";
+        }
+
+        /// <summary>
+        /// 生成一个用于查询所有数据库视图名的 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">生成 Sql 时用于参数化操作的上下文对象。</param>
+        /// <returns>生成好的查询 Sql 语句。</returns>
+        internal string GenerateSelectAllViewNameSql(IParameterContext parameterContext)
+        {
+            return "select [Name] from SysObjects where xType='V'";
+        }
+
+        /// <summary>
+        /// 将指定的布尔表示 Sql 语句转换成普通的查询表示语句。
+        /// </summary>
+        /// <param name="dataContext">转换表示 Sql 时所使用的数据操作上下文对象。</param>
+        /// <param name="expressionInfo">待转换的布尔表示语句。</param>
+        /// <returns>转换后的基础表示 Sql 信息。</returns>
+        private ExpressionInfo BoolToBasicExpression(IDataContext dataContext, ExpressionInfo expressionInfo)
+        {
+            string sql = expressionInfo.SQL;
+
+            if (expressionInfo.Type == OperationType.Subquery)
+                sql = $"({sql})";
+
+            //大于等于Sql Server 2012时使用 iif 函数
+            if (dataContext.BuildNumber >= 684)
+                return new ExpressionInfo($"iif({sql}, convert(bit, 1), convert(bit, 0))", OperationType.Call);
+            else
+                return new ExpressionInfo($"case when {sql} then convert(bit, 1) else convert(bit, 0) end", OperationType.Call);
+        }
+
+        /// <summary>
+        /// 生成指定数据源中某个字段的查询 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="selectField">待查询字段信息。</param>
+        /// <param name="belongDataSource">待查询字段归属的数据源。</param>
+        /// <param name="applyFieldAlias">是否应当为查询字段应用上别名。</param>
+        /// <returns>生成好的查询 Sql 语句。</returns>
+        private string GenerateSelectSql(IParameterContext parameterContext, Field.Field selectField, BasicDataSource belongDataSource, bool applyFieldAlias)
+        {
+            UnionDataSource unionDataSource = belongDataSource.Type == SourceType.Union ? (UnionDataSource)belongDataSource : null;
+
+            if (unionDataSource != null && unionDataSource.SelectField == null && !unionDataSource.Limit.HasValue && !unionDataSource.IsDistinctly && (unionDataSource.GroupFields == null || unionDataSource.GroupFields.Count < 1) && (unionDataSource.SortItems == null || unionDataSource.SortItems.Count < 1) && unionDataSource.Where == null)
+            {
+                return GenerateUnionSql(parameterContext, (UnionDataSource)belongDataSource);
+            }
+            else
+            {
+                StringBuilder sqlFields = new StringBuilder();
+                StringBuilder orderBy = new StringBuilder();
+                StringBuilder groupBy = new StringBuilder();
+                string sqlFrom = GenerateFromSql(parameterContext, belongDataSource, false);
+                string sqlWhere = string.Empty;
+                string top = string.Empty;
+                string distinct = belongDataSource.IsDistinctly ? "distinct " : string.Empty;
+                string other = string.Empty;
+
+                AppendSelectField(parameterContext, selectField, sqlFields, new HashSet<Field.Field>(), applyFieldAlias);
+
+                if (belongDataSource.SortItems != null && belongDataSource.SortItems.Count > 0)
+                {
+                    orderBy.Append(" order by ");
+
+                    foreach (var item in belongDataSource.SortItems)
+                    {
+                        if (orderBy.Length > 10)
+                            orderBy.Append(", ");
+
+                        var by = item.Field.GetBasicExpression(parameterContext);
+
+                        if (by.Type == OperationType.Subquery)
+                            orderBy.Append($"({by.SQL})");
+                        else
+                            orderBy.Append(by.SQL);
+
+                        if (item.Type == SortType.Descending)
+                            orderBy.Append(" desc");
+                    }
+                }
+
+                if (belongDataSource.GroupFields != null && belongDataSource.GroupFields.Count > 0)
+                {
+                    groupBy.Append(" group by ");
+
+                    foreach (var item in belongDataSource.GroupFields)
+                    {
+                        if (groupBy.Length > 10)
+                            groupBy.Append(", ");
+
+                        var by = item.GetBasicExpression(parameterContext);
+
+                        if (by.Type == OperationType.Subquery)
+                            groupBy.Append($"({by.SQL})");
+                        else
+                            groupBy.Append(by.SQL);
+                    }
+                }
+
+                if (belongDataSource.Where != null)
+                    sqlWhere = $" where {belongDataSource.Where.GetBoolExpression(parameterContext).SQL}";
+
+                if (belongDataSource.Limit != null && belongDataSource.Limit.HasValue)
+                {
+                    if (belongDataSource.Limit.Value.Start == 0)
+                    {
+                        top = $"top {belongDataSource.Limit.Value.Count} ";
+                    }
+                    else if (belongDataSource.DataContext.BuildNumber >= 684)        //Sql Server 2012 及以上版本用 offset fetch next 方式
+                    {
+                        other = $" offset {belongDataSource.Limit.Value.Start} rows fetch next {belongDataSource.Limit.Value.Count} rows only";
+                    }
+                    else if (belongDataSource.DataContext.BuildNumber >= 611)        //Sql Server 2005 及以上版本用 row_number() over() 方式
+                    {
+                        if (orderBy.Length < 1)
+                            throw new Exception("低于 Sql Server 2012 版本的数据库在使用 Limit 功能时至少要设置有一个排序字段");
+
+                        return $"select * from (select {distinct}row_number() over({orderBy.ToString().TrimStart()}) as RowNumber, {sqlFields} from {sqlFrom}{sqlWhere}{groupBy}) as LimitTable where RowNumber between {belongDataSource.Limit.Value.Start + 1} and {belongDataSource.Limit.Value.Start + belongDataSource.Limit.Value.Count}";
+                    }
+                    else
+                    {
+                        throw new Exception("低于 Sql Server 2005 版本的数据库不支持 Limit 功能，请改用 Contains 方法实现");
+                    }
+                }
+
+                return $"select {distinct}{top}{sqlFields} from {sqlFrom}{sqlWhere}{groupBy}{orderBy}{other}";
+            }
+        }
+
+        /// <summary>
+        /// 生成指定数据源在被用作 Select 查询中的 From 数据源时的 Sql。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="dataSource">被用作查询 Sql 中的 From 数据源。</param>
+        /// <param name="forceQuery">若是原始数据源是否强制启用查询。</param>
+        /// <returns>生成好的 Sql 查询语句。</returns>
+        private string GenerateFromSql(IParameterContext parameterContext, DataSource.DataSource dataSource, bool forceQuery)
+        {
+            if (dataSource.Type == SourceType.Table || dataSource.Type == SourceType.View)
+            {
+                OriginalDataSource originalDataSource = (OriginalDataSource)dataSource;
+
+                if (forceQuery && originalDataSource.SelectField != null)
+                    return $"({GenerateSelectSql(parameterContext, originalDataSource.SelectField, originalDataSource, true)}) as {originalDataSource.Alias}";
+                else
+                    return $"{originalDataSource.Name} as {originalDataSource.Alias}";
+            }
+            else if (dataSource.Type == SourceType.Select)
+            {
+                SelectDataSource selectDataSource = (SelectDataSource)dataSource;
+
+                if (forceQuery)
+                    return $"({GenerateSelectSql(parameterContext, selectDataSource.SelectField ?? selectDataSource.RootField, selectDataSource, true)}) as {selectDataSource.Alias}";
+                else
+                    return GenerateFromSql(parameterContext, selectDataSource.QueryDataSource, true);
+            }
+            else if (dataSource.Type == SourceType.Union)
+            {
+                UnionDataSource unionDataSource = (UnionDataSource)dataSource;
+
+                if (forceQuery && unionDataSource.SelectField != null)
+                    return $"({GenerateSelectSql(parameterContext, unionDataSource.SelectField, unionDataSource, true)}) as {unionDataSource.Alias}";
+                else
+                    return $"({GenerateUnionSql(parameterContext, unionDataSource)}) as {unionDataSource.Alias}";
+            }
+            else
+            {
+                JoinDataSource joinDataSource = (JoinDataSource)dataSource;
+
+                string left = GenerateFromSql(parameterContext, joinDataSource.Left, true);
+                string right = GenerateFromSql(parameterContext, joinDataSource.Right, true);
+
+                if (joinDataSource.Type == SourceType.CrossJoin)
+                {
+                    return $"{left} cross join {right}";
+                }
+                else
+                {
+                    string joinType;
+
+                    switch (joinDataSource.Type)
+                    {
+                        case SourceType.LeftJoin:
+                            joinType = "left join";
+                            break;
+                        case SourceType.RightJoin:
+                            joinType = "right join";
+                            break;
+                        case SourceType.FullJoin:
+                            joinType = "full join";
+                            break;
+                        default:
+                            joinType = "inner join";
+                            break;
+                    }
+
+                    return $"{left} {joinType} {right} on {joinDataSource.On.GetBoolExpression(parameterContext).SQL}";
+                }
+            }
+        }
+
+        /// <summary>
+        /// 生成指定数据合并数据源的合并 Sql 语句。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="unionDataSource">待生成 Sql 语句的数据源。</param>
+        /// <returns>生成好的合并 Sql 语句。</returns>
+        private string GenerateUnionSql(IParameterContext parameterContext, UnionDataSource unionDataSource)
+        {
+            string unionType;
+
+            switch (unionDataSource.UnionType)
+            {
+                case UnionType.Intersect:
+                    unionType = "intersect";
+                    break;
+                case UnionType.Union:
+                    unionType = "union";
+                    break;
+                case UnionType.UnionALL:
+                    unionType = "union all";
+                    break;
+                case UnionType.Minus:
+                    unionType = "minus";
+                    break;
+                default:
+                    throw new Exception($"Sql Server 不支持 {unionDataSource.UnionType} 的方式合并数据源");
+            }
+
+            return $"{GenerateSelectSql(parameterContext, unionDataSource.Main.SelectField ?? unionDataSource.Main.RootField, unionDataSource.Main, true)}{Environment.NewLine}{unionType}{Environment.NewLine}{GenerateSelectSql(parameterContext, unionDataSource.Affiliation.SelectField ?? unionDataSource.Affiliation.RootField, unionDataSource.Affiliation, true)}";
+        }
+
+        /// <summary>
+        /// 追加待查询字段信息到字段列表中。
+        /// </summary>
+        /// <param name="parameterContext">创建表示 Sql 时用于参数化操作的上下文对象。</param>
+        /// <param name="selectField">待追加的查询字段。</param>
+        /// <param name="sqlFields">用于保存查询字段信息的字符串构造器。</param>
+        /// <param name="appendedFields">已经追加过的字段集合。</param>
+        /// <param name="applyFieldAlias">生成的查询字段是否应当应用上字段别名。</param>
+        private void AppendSelectField(IParameterContext parameterContext, Field.Field selectField, StringBuilder sqlFields, HashSet<Field.Field> appendedFields, bool applyFieldAlias)
+        {
+            if (!appendedFields.Contains(selectField))
+            {
+                if (selectField.Type == FieldType.Object)
+                {
+                    ObjectField objectField = (ObjectField)selectField;
+
+                    if (objectField.ConstructorInfo.Parameters != null && objectField.ConstructorInfo.Parameters.Count > 0)
+                    {
+                        foreach (var item in objectField.ConstructorInfo.Parameters)
+                        {
+                            AppendSelectField(parameterContext, item, sqlFields, appendedFields, applyFieldAlias);
+                        }
+                    }
+
+                    if (objectField.Members != null && objectField.Members.Count > 0)
+                    {
+                        foreach (var item in objectField.Members)
+                        {
+                            AppendSelectField(parameterContext, item.Value.Field, sqlFields, appendedFields, applyFieldAlias);
+                        }
+                    }
+                }
+                else if (selectField.Type == FieldType.Collection)
+                {
+                    CollectionField collectionField = (CollectionField)selectField;
+
+                    if (collectionField.ConstructorInfo.Parameters != null && collectionField.ConstructorInfo.Parameters.Count > 0)
+                    {
+                        foreach (var item in collectionField.ConstructorInfo.Parameters)
+                        {
+                            AppendSelectField(parameterContext, item, sqlFields, appendedFields, applyFieldAlias);
+                        }
+                    }
+
+                    foreach (var item in collectionField)
+                    {
+                        AppendSelectField(parameterContext, item, sqlFields, appendedFields, applyFieldAlias);
+                    }
+                }
+                else if (selectField is BasicField basicField)
+                {
+                    var basic = basicField.GetBasicExpression(parameterContext);
+
+                    if (sqlFields.Length > 0)
+                        sqlFields.Append(", ");
+
+                    if (basic.Type == OperationType.Subquery)
+                        sqlFields.Append($"({basic.SQL})");
+                    else
+                        sqlFields.Append(basic.SQL);
+
+                    if (applyFieldAlias && !string.IsNullOrWhiteSpace(basicField.Alias))
+                    {
+                        string fieldInnerName = null;
+
+                        if (basicField.Type == FieldType.Original)
+                            fieldInnerName = ((OriginalField)basicField).FieldName;
+                        else if (basicField.Type == FieldType.Quote)
+                            fieldInnerName = ((QuoteField)basicField).QuoteFieldName;
+
+                        if (basicField.Alias != fieldInnerName)
+                            sqlFields.Append($" as {basicField.Alias}");
+                    }
+                }
+
+                appendedFields.Add(selectField);
+            }
         }
     }
 }

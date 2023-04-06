@@ -5,7 +5,7 @@ using System.Text;
 namespace GfdbFramework.SqlServer
 {
     /// <summary>
-    /// 数据库额外信息。
+    /// Sql Server 数据库额外信息。
     /// </summary>
     public class DatabaseExtraInfo
     {
@@ -28,5 +28,10 @@ namespace GfdbFramework.SqlServer
         /// 获取或设置该数据库的所有者。
         /// </summary>
         public string Owner { get; set; }
+
+        /// <summary>
+        /// 获取或设置一个值，该值指示此次创建数据库是否应当以附加数据库的方式创建。
+        /// </summary>
+        public bool IsAttach { get; set; }
     }
 }
