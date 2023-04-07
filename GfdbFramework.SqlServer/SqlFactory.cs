@@ -275,36 +275,31 @@ namespace GfdbFramework.SqlServer
         /// <returns>该三元操作字段对应的布尔 Sql 表示结果。</returns>
         public ExpressionInfo CreateConditionalBoolSql(IParameterContext parameterContext, ConditionalField field)
         {
-            if (field.DataType == _BoolType)
+            if (field.IfTrue.Type == FieldType.Constant && field.IfFalse.Type == FieldType.Constant)
             {
-                if (field.IfTrue.Type == FieldType.Constant && field.IfFalse.Type == FieldType.Constant)
-                {
-                    bool ifTrue = (bool)((ConstantField)field.IfTrue).Value;
-                    bool ifFalse = (bool)((ConstantField)field.IfFalse).Value;
+                bool ifTrue = (bool)((ConstantField)field.IfTrue).Value;
+                bool ifFalse = (bool)((ConstantField)field.IfFalse).Value;
 
-                    if (ifTrue)
-                    {
-                        if (ifFalse)
-                            return new ExpressionInfo("1 = 1", OperationType.Equal);
-                        else
-                            return field.Test.GetBoolExpression(parameterContext);
-                    }
-                    else if (ifFalse)
-                    {
-                        return new ExpressionInfo($"{field.Test.GetBasicExpression(parameterContext)} = 0", OperationType.Equal);
-                    }
+                if (ifTrue)
+                {
+                    if (ifFalse)
+                        return new ExpressionInfo("1 = 1", OperationType.Equal);
                     else
-                    {
-                        return new ExpressionInfo("1 = 0", OperationType.Equal);
-                    }
+                        return field.Test.GetBoolExpression(parameterContext);
+                }
+                else if (ifFalse)
+                {
+                    return new ExpressionInfo($"{field.Test.GetBasicExpression(parameterContext)} = 0", OperationType.Equal);
                 }
                 else
                 {
-                    return new ExpressionInfo($"{field.GetBasicExpression(parameterContext).SQL} = 1", OperationType.Equal);
+                    return new ExpressionInfo("1 = 0", OperationType.Equal);
                 }
             }
-
-            return BoolToBasicExpression(field.DataContext, field.GetBoolExpression(parameterContext));
+            else
+            {
+                return new ExpressionInfo($"{field.GetBasicExpression(parameterContext).SQL} = 1", OperationType.Equal);
+            }
         }
 
         /// <summary>
