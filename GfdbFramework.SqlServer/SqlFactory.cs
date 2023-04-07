@@ -736,6 +736,7 @@ namespace GfdbFramework.SqlServer
 
                         string minSql = Helper.CheckIsPriority(OperationType.Add, min.Type, false) ? $"({min.SQL})" : min.SQL;
                         string maxSql = Helper.CheckIsPriority(OperationType.Subtract, max.Type, false) ? $"({max.SQL})" : max.SQL;
+
                         maxSql = Helper.CheckIsPriority(OperationType.Subtract, min.Type, true) ? $"({maxSql} - ({min.SQL}))" : $"({maxSql} - {min.SQL})";
 
                         return new ExpressionInfo($"{minSql} + convert(int, rand() * {maxSql})", OperationType.Add);
@@ -2028,7 +2029,7 @@ namespace GfdbFramework.SqlServer
                     unionType = "union all";
                     break;
                 case UnionType.Minus:
-                    unionType = "minus";
+                    unionType = "except";
                     break;
                 default:
                     throw new Exception($"Sql Server 不支持 {unionDataSource.UnionType} 的方式合并数据源");
