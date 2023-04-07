@@ -162,7 +162,7 @@ namespace GfdbFramework.SqlServer
                             collection.Append(parameterContext.Add(item));
                         }
 
-                        return new ExpressionInfo($"{leftSql} {containType} ({collection})", OperationType.Default);
+                        return new ExpressionInfo($"{leftSql} {containType} ({collection})", field.OperationType);
                     }
                 }
                 else
@@ -196,9 +196,9 @@ namespace GfdbFramework.SqlServer
                     string rightSql = Helper.CheckIsPriority(field.OperationType, right.Type, true) ? $"({right.SQL})" : right.SQL;
 
                     if (field.DataContext.IsCaseSensitive && field.Left.DataType == _StringType && field.Right.DataType == _StringType)
-                        return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} {(field.OperationType == OperationType.Equal ? "=" : "!=")} {rightSql}", OperationType.Equal);
+                        return new ExpressionInfo($"{leftSql} {_CASE_SENSITIVE_MARK} {(field.OperationType == OperationType.Equal ? "=" : "!=")} {rightSql}", field.OperationType);
                     else
-                        return new ExpressionInfo($"{leftSql} {(field.OperationType == OperationType.Equal ? "=" : "!=")} {rightSql}", OperationType.Equal);
+                        return new ExpressionInfo($"{leftSql} {(field.OperationType == OperationType.Equal ? "=" : "!=")} {rightSql}", field.OperationType);
                 }
             }
             else if (field.OperationType == OperationType.AndAlso || field.OperationType == OperationType.OrElse)

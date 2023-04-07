@@ -16,6 +16,7 @@ namespace GfdbFramework.SqlServer.Test
 
         static void Main(string[] args)
         {
+
             DataContext dataContext = new DataContext();
 
             if (!dataContext.ExistsDatabase(new DatabaseInfo("TestDB2")))
