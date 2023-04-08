@@ -487,7 +487,7 @@ namespace GfdbFramework.SqlServer
                             if (field.MethodInfo.Name == "Replace")
                                 return new ExpressionInfo($"replace({objectSql}, {param1Sql}, {param2Sql})", OperationType.Call);
                             else
-                                return new ExpressionInfo($"subString({objectSql}, 1, {param1Sql}) + {param2Sql} + subString({objectSql}, {(Helper.CheckIsPriority(OperationType.Add, param1.Type, false) ? $"({param1Sql})" : param1Sql)} + 1, len({objectSql}) - {(Helper.CheckIsPriority(OperationType.Subtract, param1.Type, true) ? $"({param1Sql})" : param1Sql)})", OperationType.Add);
+                                return new ExpressionInfo($"subString({objectSql}, 1, {param1Sql}) + {param2Sql} + subString({objectSql}, {(Helper.CheckIsPriority(OperationType.Add, param1.Type, false) ? $"({param1.SQL})" : param1.SQL)} + 1, len({objectSql}) - {(Helper.CheckIsPriority(OperationType.Subtract, param1.Type, true) ? $"({param1Sql})" : param1Sql)})", OperationType.Add);
                         }
                     }
                     //若调用实例为 DateTime 类型
