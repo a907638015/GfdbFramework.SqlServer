@@ -311,7 +311,12 @@ namespace GfdbFramework.SqlServer
         /// </summary>
         public void RollbackTransaction()
         {
-            throw new NotImplementedException();
+            if (_Transaction != null)
+                _Transaction.Rollback();
+
+            CloseConnection(OpenedMode.Transaction);
+
+            _Transaction = null;
         }
 
         /// <summary>
@@ -320,7 +325,8 @@ namespace GfdbFramework.SqlServer
         /// <param name="pointName">要回滚的保存点名称或事务名称。</param>
         public void RollbackTransaction(string pointName)
         {
-            throw new NotImplementedException();
+            if (_Transaction != null)
+                _Transaction.Rollback(pointName);
         }
 
         /// <summary>
@@ -329,7 +335,8 @@ namespace GfdbFramework.SqlServer
         /// <param name="pointName">回滚点名称</param>
         public void SaveTransaction(string pointName)
         {
-            throw new NotImplementedException();
+            if (_Transaction != null)
+                _Transaction.Save(pointName);
         }
 
         /// <summary>
