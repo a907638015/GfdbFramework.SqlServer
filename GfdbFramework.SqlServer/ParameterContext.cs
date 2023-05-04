@@ -32,6 +32,9 @@ namespace GfdbFramework.SqlServer
         /// <returns>添加到参数中后所使用的参数名。</returns>
         public string Add(object value)
         {
+            if (value == null)
+                value = DBNull.Value;
+
             if (EnableParametric)
             {
                 if (_Params.TryGetValue(value, out SqlParameter parameter))
